@@ -73,11 +73,36 @@ func (r *FlowCollectorList) ConvertFrom(srcRaw conversion.Hub) error {
 	return Convert_v1beta2_FlowCollectorList_To_v1beta1_FlowCollectorList(src, r, nil)
 }
 
-// This function need to be manually created because conversion-gen not able to create it intentionally because
-// we have new defined fields in v1beta2 not in v1beta1
+// This function need to be manually created because we moved fields between v1beta2 and v1beta1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
+func Convert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in *FlowCollector, out *v1beta2.FlowCollector, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in, out, s); err != nil {
+		return fmt.Errorf("auto convert FlowCollector v1beta1 to v1beta2: %w", err)
+	}
+	out.Spec.Processor.LokiTimeout = in.Spec.Loki.Timeout
+	out.Spec.Processor.LokiBatchWait = in.Spec.Loki.BatchWait
+	out.Spec.Processor.LokiBatchSize = in.Spec.Loki.BatchSize
+	out.Spec.Processor.Debug.LokiMinBackoff = in.Spec.Loki.MinBackoff
+	out.Spec.Processor.Debug.LokiMaxBackoff = in.Spec.Loki.MaxBackoff
+	out.Spec.Processor.Debug.LokiMaxRetries = in.Spec.Loki.MaxRetries
+	out.Spec.Processor.Debug.LokiStaticLabels = in.Spec.Loki.StaticLabels
+	return nil
+}
+
+// This function need to be manually created because we moved fields between v1beta2 and v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in *v1beta2.FlowCollector, out *FlowCollector, s apiconversion.Scope) error {
+	if err := autoConvert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in, out, s); err != nil {
+		return fmt.Errorf("auto convert FlowCollector v1beta1 to v1beta2: %w", err)
+	}
+	out.Spec.Loki.Timeout = in.Spec.Processor.LokiTimeout
+	out.Spec.Loki.BatchWait = in.Spec.Processor.LokiBatchWait
+	out.Spec.Loki.BatchSize = in.Spec.Processor.LokiBatchSize
+	out.Spec.Loki.MinBackoff = in.Spec.Processor.Debug.LokiMinBackoff
+	out.Spec.Loki.MaxBackoff = in.Spec.Processor.Debug.LokiMaxBackoff
+	out.Spec.Loki.MaxRetries = in.Spec.Processor.Debug.LokiMaxRetries
+	out.Spec.Loki.StaticLabels = in.Spec.Processor.Debug.LokiStaticLabels
+	return nil
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
@@ -123,6 +148,22 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 		return fmt.Errorf("copying v1beta1.Loki.StatusTLS into v1beta2.Loki.Manual.StatusTLS: %w", err)
 	}
 	return autoConvert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s apiconversion.Scope) error {
+	out.Debug.Register = in.Register
+	out.Debug.Port = in.Port
+	return autoConvert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
@@ -209,6 +250,30 @@ func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollec
 		logTypes := v1beta2.FLPLogTypes(utilconversion.UpperToPascal(*in.LogTypes))
 		out.LogTypes = &logTypes
 	}
+	out.Debug.Port = in.Port
+	out.Debug.HealthPort = in.HealthPort
+	out.Debug.ProfilePort = in.ProfilePort
+	out.Debug.EnableKubeProbes = in.EnableKubeProbes
+	out.Debug.DropUnusedFields = in.DropUnusedFields
+	out.Debug.ConversationHeartbeatInterval = in.ConversationHeartbeatInterval
+	out.Debug.ConversationEndTimeout = in.ConversationEndTimeout
+	out.Debug.ConversationTerminatingTimeout = in.ConversationTerminatingTimeout
+	return autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s)
+}
+
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in *v1beta2.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s apiconversion.Scope) error {
+	out.Register = in.Debug.Register
+	out.Port = in.Debug.Port
+	return autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_DebugConfig_To_v1beta2_DebugAgentConfig(in *DebugConfig, out *v1beta2.DebugAgentConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
 	return nil
 }
 
@@ -227,6 +292,13 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 	return nil
 }
 
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_DebugAgentConfig_To_v1beta1_DebugConfig(in *v1beta2.DebugAgentConfig, out *DebugConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
+	return nil
+}
+
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have camel case enum in v1beta2 which were uppercase in v1beta1
 // nolint:golint,stylecheck,revive
@@ -235,6 +307,13 @@ func Convert_v1beta1_ServerTLS_To_v1beta2_ServerTLS(in *ServerTLS, out *v1beta2.
 		return err
 	}
 	out.Type = v1beta2.ServerTLSConfigType(utilconversion.UpperToPascal(string(in.Type)))
+	return nil
+}
+
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_DebugConfig_To_v1beta2_DebugProcessorConfig(in *DebugConfig, out *v1beta2.DebugProcessorConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
 	return nil
 }
 
@@ -312,5 +391,12 @@ func Convert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(in *
 		return err
 	}
 	out.Type = ExporterType(utilconversion.PascalToUpper(string(in.Type), '_'))
+	return nil
+}
+
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_DebugProcessorConfig_To_v1beta1_DebugConfig(in *v1beta2.DebugProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
 	return nil
 }

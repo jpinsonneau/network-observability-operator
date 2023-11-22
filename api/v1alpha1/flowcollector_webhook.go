@@ -53,14 +53,14 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	// Processor
 	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
-	if restored.Spec.Processor.ConversationHeartbeatInterval != nil {
-		dst.Spec.Processor.ConversationHeartbeatInterval = restored.Spec.Processor.ConversationHeartbeatInterval
+	if restored.Spec.Processor.Debug.ConversationHeartbeatInterval != nil {
+		dst.Spec.Processor.Debug.ConversationHeartbeatInterval = restored.Spec.Processor.Debug.ConversationHeartbeatInterval
 	}
-	if restored.Spec.Processor.ConversationEndTimeout != nil {
-		dst.Spec.Processor.ConversationEndTimeout = restored.Spec.Processor.ConversationEndTimeout
+	if restored.Spec.Processor.Debug.ConversationEndTimeout != nil {
+		dst.Spec.Processor.Debug.ConversationEndTimeout = restored.Spec.Processor.Debug.ConversationEndTimeout
 	}
-	if restored.Spec.Processor.ConversationTerminatingTimeout != nil {
-		dst.Spec.Processor.ConversationTerminatingTimeout = restored.Spec.Processor.ConversationTerminatingTimeout
+	if restored.Spec.Processor.Debug.ConversationTerminatingTimeout != nil {
+		dst.Spec.Processor.Debug.ConversationTerminatingTimeout = restored.Spec.Processor.Debug.ConversationTerminatingTimeout
 	}
 	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
@@ -168,14 +168,14 @@ func Convert_v1alpha1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowCol
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
-// we have new defined fields in v1beta1 not in v1alpha1
+// we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in *v1beta2.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorConsolePlugin(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
-// we have new defined fields in v1beta1 not in v1alpha1
+// we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
 	return autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in, out, s)
@@ -335,4 +335,50 @@ func Convert_v1beta2_FlowCollectorExporter_To_v1alpha1_FlowCollectorExporter(in 
 func Convert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in *FLPMetrics, out *v1beta2.FLPMetrics, s apiconversion.Scope) error {
 	out.IncludeList = metrics.GetAsIncludeList(in.IgnoreTags, nil)
 	return autoConvert_v1alpha1_FLPMetrics_To_v1beta2_FLPMetrics(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s apiconversion.Scope) error {
+	return autoConvert_v1alpha1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollectorFLP, out *v1beta2.FlowCollectorFLP, s apiconversion.Scope) error {
+	return autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugAgentConfig(in *DebugConfig, out *v1beta2.DebugAgentConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_DebugAgentConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugAgentConfig, out *DebugConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugProcessorConfig(in *DebugConfig, out *v1beta2.DebugProcessorConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
+	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_DebugProcessorConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
+	out.Env = in.Env
+	return nil
 }

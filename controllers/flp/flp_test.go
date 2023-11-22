@@ -61,11 +61,9 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 		DeploymentModel: flowslatest.DeploymentModelDirect,
 		Agent:           flowslatest.FlowCollectorAgent{Type: flowslatest.AgentEBPF},
 		Processor: flowslatest.FlowCollectorFLP{
-			Port:            2055,
 			ImagePullPolicy: string(pullPolicy),
 			LogLevel:        "trace",
 			Resources:       resources,
-			HealthPort:      8080,
 			Metrics: flowslatest.FLPMetrics{
 				Server: flowslatest.MetricsServerConfig{
 					Port: 9090,
@@ -74,6 +72,10 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 					},
 				},
 			},
+			LokiBatchWait: &metav1.Duration{
+				Duration: 1,
+			},
+			LokiBatchSize:         102400,
 			KafkaConsumerReplicas: ptr.To(int32(1)),
 			KafkaConsumerAutoscaler: flowslatest.FlowCollectorHPA{
 				Status:      flowslatest.HPAStatusEnabled,
@@ -91,14 +93,17 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 				}},
 			},
 			LogTypes: &outputRecordTypes,
-			ConversationHeartbeatInterval: &metav1.Duration{
-				Duration: conntrackHeartbeatInterval,
-			},
-			ConversationEndTimeout: &metav1.Duration{
-				Duration: conntrackEndTimeout,
-			},
-			ConversationTerminatingTimeout: &metav1.Duration{
-				Duration: conntrackTerminatingTimeout,
+			Debug: flowslatest.DebugProcessorConfig{
+				Port:       2055,
+				HealthPort: 8080,
+				LokiMinBackoff: &metav1.Duration{
+					Duration: 1,
+				},
+				LokiMaxBackoff: &metav1.Duration{
+					Duration: 300,
+				},
+				LokiMaxRetries:   ptr.To(int32(10)),
+				LokiStaticLabels: map[string]string{"app": "netobserv-flowcollector"},
 			},
 		},
 		Loki: getLoki(lokiMode...),
@@ -117,38 +122,14 @@ func getLoki(lokiMode ...string) flowslatest.FlowCollectorLoki {
 				Name:      "lokistack",
 				Namespace: "ls-namespace",
 			},
-				BatchWait: &metav1.Duration{
-					Duration: 1,
-				},
-				BatchSize: 102400,
-				MinBackoff: &metav1.Duration{
-					Duration: 1,
-				},
-				MaxBackoff: &metav1.Duration{
-					Duration: 300,
-				},
-				Enable:       ptr.To(true),
-				MaxRetries:   ptr.To(int32(10)),
-				StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
+				Enable: ptr.To(true),
 			}
 		}
 	}
 	// defaults to MANUAL mode if no other mode was selected
 	return flowslatest.FlowCollectorLoki{Mode: flowslatest.LokiModeManual, Manual: flowslatest.LokiManualParams{
 		IngesterURL: "http://loki:3100/"},
-		BatchWait: &metav1.Duration{
-			Duration: 1,
-		},
-		BatchSize: 102400,
-		MinBackoff: &metav1.Duration{
-			Duration: 1,
-		},
-		MaxBackoff: &metav1.Duration{
-			Duration: 300,
-		},
-		Enable:       ptr.To(true),
-		MaxRetries:   ptr.To(int32(10)),
-		StaticLabels: map[string]string{"app": "netobserv-flowcollector"},
+		Enable: ptr.To(true),
 	}
 }
 
@@ -241,7 +222,7 @@ func TestDaemonSetChanged(t *testing.T) {
 	first := b.daemonSet(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = ptr.To(true)
+	cfg.Processor.Debug.EnableKubeProbes = ptr.To(true)
 	b = monoBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -385,7 +366,7 @@ func TestDeploymentChanged(t *testing.T) {
 	first := b.deployment(annotate(digest))
 
 	// Check probes enabled change
-	cfg.Processor.EnableKubeProbes = ptr.To(true)
+	cfg.Processor.Debug.EnableKubeProbes = ptr.To(true)
 	b = transfBuilder(ns, &cfg)
 	_, digest, err = b.configMap()
 	assert.NoError(err)
@@ -657,15 +638,15 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
-	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
-	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
-	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
-	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
-	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
+	assert.Equal(cfg.Processor.LokiBatchWait.Duration.String(), lokiCfg.BatchWait)
+	assert.EqualValues(cfg.Processor.LokiBatchSize, lokiCfg.BatchSize)
+	assert.Equal(cfg.Processor.Debug.LokiMinBackoff.Duration.String(), lokiCfg.MinBackoff)
+	assert.Equal(cfg.Processor.Debug.LokiMaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
+	assert.EqualValues(*cfg.Processor.Debug.LokiMaxRetries, lokiCfg.MaxRetries)
 	assert.EqualValues([]string{
 		"SrcK8S_Namespace",
 		"SrcK8S_OwnerName",
@@ -688,7 +669,6 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	ns := "namespace"
 	cfg := getConfig(string(flowslatest.LokiModeLokiStack))
 	cfg.Agent.Type = flowslatest.AgentIPFIX
-	loki := cfg.Loki
 	b := monoBuilder(ns, &cfg)
 	cm, digest, err := b.configMap()
 	assert.NoError(err)
@@ -707,7 +687,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(cfg.Processor.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)
@@ -718,11 +698,11 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 	assert.Equal("/var/loki-certs-ca/service-ca.crt", lokiCfg.ClientConfig.TLSConfig.CAFile)
 	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.CertFile)
 	assert.Equal("", lokiCfg.ClientConfig.TLSConfig.KeyFile)
-	assert.Equal(loki.BatchWait.Duration.String(), lokiCfg.BatchWait)
-	assert.Equal(loki.MinBackoff.Duration.String(), lokiCfg.MinBackoff)
-	assert.Equal(loki.MaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
-	assert.EqualValues(*loki.MaxRetries, lokiCfg.MaxRetries)
-	assert.EqualValues(loki.BatchSize, lokiCfg.BatchSize)
+	assert.Equal(cfg.Processor.LokiBatchWait.Duration.String(), lokiCfg.BatchWait)
+	assert.EqualValues(cfg.Processor.LokiBatchSize, lokiCfg.BatchSize)
+	assert.Equal(cfg.Processor.Debug.LokiMinBackoff.Duration.String(), lokiCfg.MinBackoff)
+	assert.Equal(cfg.Processor.Debug.LokiMaxBackoff.Duration.String(), lokiCfg.MaxBackoff)
+	assert.EqualValues(*cfg.Processor.Debug.LokiMaxRetries, lokiCfg.MaxRetries)
 	assert.EqualValues([]string{"SrcK8S_Namespace", "SrcK8S_OwnerName", "SrcK8S_Type", "DstK8S_Namespace", "DstK8S_OwnerName", "DstK8S_Type", "FlowDirection", "Duplicate", "_RecordType"}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
@@ -878,7 +858,7 @@ func TestPipelineConfigDropUnused(t *testing.T) {
 	cfg := getConfig()
 	cfg.Agent.Type = flowslatest.AgentIPFIX
 	cfg.Processor.LogLevel = "info"
-	cfg.Processor.DropUnusedFields = ptr.To(true)
+	cfg.Processor.Debug.DropUnusedFields = ptr.To(true)
 	b := monoBuilder(ns, &cfg)
 	cm, _, err := b.configMap()
 	assert.NoError(err)

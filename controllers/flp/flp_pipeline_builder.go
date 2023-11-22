@@ -86,20 +86,20 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         indexFields,
-			BatchSize:      int(b.loki.BatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.loki.BatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(b.loki.MaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(b.loki.MaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(b.loki.MinBackoff),
+			BatchSize:      int(b.desired.Processor.LokiBatchSize),
+			BatchWait:      helper.UnstructuredDuration(b.desired.Processor.LokiBatchWait),
+			MaxBackoff:     helper.UnstructuredDuration(b.desired.Processor.Debug.LokiMaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(b.desired.Processor.Debug.LokiMaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(b.desired.Processor.Debug.LokiMinBackoff),
 			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.loki.Timeout),
+			Timeout:        helper.UnstructuredDuration(b.desired.Processor.LokiTimeout),
 			URL:            b.loki.IngesterURL,
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
 			TenantID:       b.loki.TenantID,
 		}
 
-		for k, v := range b.desired.Loki.StaticLabels {
+		for k, v := range b.desired.Processor.Debug.LokiStaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
@@ -270,18 +270,18 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
 
 		terminatingTimeout := conntrackTerminatingTimeout
-		if b.desired.Processor.ConversationTerminatingTimeout != nil {
-			terminatingTimeout = b.desired.Processor.ConversationTerminatingTimeout.Duration
+		if b.desired.Processor.Debug.ConversationTerminatingTimeout != nil {
+			terminatingTimeout = b.desired.Processor.Debug.ConversationTerminatingTimeout.Duration
 		}
 
 		endTimeout := conntrackEndTimeout
-		if b.desired.Processor.ConversationEndTimeout != nil {
-			endTimeout = b.desired.Processor.ConversationEndTimeout.Duration
+		if b.desired.Processor.Debug.ConversationEndTimeout != nil {
+			endTimeout = b.desired.Processor.Debug.ConversationEndTimeout.Duration
 		}
 
 		heartbeatInterval := conntrackHeartbeatInterval
-		if b.desired.Processor.ConversationHeartbeatInterval != nil {
-			heartbeatInterval = b.desired.Processor.ConversationHeartbeatInterval.Duration
+		if b.desired.Processor.Debug.ConversationHeartbeatInterval != nil {
+			heartbeatInterval = b.desired.Processor.Debug.ConversationHeartbeatInterval.Duration
 		}
 
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
@@ -342,7 +342,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	}
 
 	// Filter-out unused fields?
-	if helper.PtrBool(b.desired.Processor.DropUnusedFields) {
+	if helper.PtrBool(b.desired.Processor.Debug.DropUnusedFields) {
 		if helper.UseIPFIX(b.desired) {
 			rules := filters.GetOVSGoflowUnusedRules()
 			transformFilterRules = append(transformFilterRules, rules...)

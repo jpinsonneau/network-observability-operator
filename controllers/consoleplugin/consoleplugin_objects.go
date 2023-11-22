@@ -73,7 +73,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      b.desired.ConsolePlugin.Port,
+				Port:      b.desired.ConsolePlugin.Debug.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -83,7 +83,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      b.desired.ConsolePlugin.Port,
+					Port:      b.desired.ConsolePlugin.Debug.Port,
 				},
 			}},
 		},
@@ -267,12 +267,12 @@ func (b *builder) mainService() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
-				Port:     b.desired.ConsolePlugin.Port,
+				Port:     b.desired.ConsolePlugin.Debug.Port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt(int(b.desired.ConsolePlugin.Port)),
+				TargetPort: intstr.FromInt(int(b.desired.ConsolePlugin.Debug.Port)),
 			}},
 		},
 	}

@@ -334,7 +334,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 			},
 		}, corev1.EnvVar{
 			Name:  envFlowsTargetPort,
-			Value: strconv.Itoa(int(coll.Spec.Processor.Port)),
+			Value: strconv.Itoa(int(coll.Spec.Processor.Debug.Port)),
 		})
 	}
 	return config, nil

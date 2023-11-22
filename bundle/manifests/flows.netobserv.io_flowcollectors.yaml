@@ -5985,6 +5985,51 @@ spec:
                         - Enabled
                         type: string
                     type: object
+                  debug:
+                    description: '`debug` allows setting some aspects of the internal
+                      configuration of the console plugin. This section is aimed exclusively
+                      for debugging and fine-grained performance optimizations, such
+                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
+                      do it at their own risk.'
+                    properties:
+                      args:
+                        description: '`args` allows passing custom arguments to underlying
+                          components. Useful for overriding some parameters, such
+                          as an url or a configuration path, that should not be publicly
+                          exposed as part of the FlowCollector descriptor, as they
+                          are only useful in edge debug or support scenarios.'
+                        items:
+                          type: string
+                        type: array
+                      env:
+                        additionalProperties:
+                          type: string
+                        description: '`env` allows passing custom environment variables
+                          to underlying components. Useful for passing some very concrete
+                          performance-tuning options, such as `GOGC` and `GOMAXPROCS`,
+                          that should not be publicly exposed as part of the FlowCollector
+                          descriptor, as they are only useful in edge debug or support
+                          scenarios.'
+                        type: object
+                      port:
+                        default: 9001
+                        description: '`port` is the plugin service port. Do not use
+                          9002, which is reserved for metrics.'
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      register:
+                        default: true
+                        description: '`register` allows, when set to `true`, to automatically
+                          register the provided console plugin with the OpenShift
+                          Console operator. When set to `false`, you can still register
+                          it manually by editing console.operator.openshift.io/cluster
+                          with the following command: `oc patch console.operator.openshift.io
+                          cluster --type=''json'' -p ''[{"op": "add", "path": "/spec/plugins/-",
+                          "value": "netobserv-plugin"}]''`'
+                        type: boolean
+                    type: object
                   enable:
                     default: true
                     description: Enables the console plugin deployment. `spec.Loki.enable`
@@ -6011,14 +6056,6 @@ spec:
                     - fatal
                     - panic
                     type: string
-                  port:
-                    default: 9001
-                    description: '`port` is the plugin service port. Do not use 9002,
-                      which is reserved for metrics.'
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
                   portNaming:
                     default:
                       enable: true
@@ -6083,15 +6120,6 @@ spec:
                       - name
                       type: object
                     type: array
-                  register:
-                    default: true
-                    description: '`register` allows, when set to `true`, to automatically
-                      register the provided console plugin with the OpenShift Console
-                      operator. When set to `false`, you can still register it manually
-                      by editing console.operator.openshift.io/cluster with the following
-                      command: `oc patch console.operator.openshift.io cluster --type=''json''
-                      -p ''[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]''`'
-                    type: boolean
                   replicas:
                     default: 1
                     description: '`replicas` defines the number of replicas (pods)
@@ -6555,18 +6583,6 @@ spec:
               loki:
                 description: '`loki`, the flow store, client settings.'
                 properties:
-                  batchSize:
-                    default: 102400
-                    description: '`batchSize` is the maximum batch size (in bytes)
-                      of logs to accumulate before sending.'
-                    format: int64
-                    minimum: 1
-                    type: integer
-                  batchWait:
-                    default: 1s
-                    description: '`batchWait` is the maximum time to wait before sending
-                      a batch.'
-                    type: string
                   enable:
                     default: true
                     description: Set `enable` to `true` to store flows in Loki. It
@@ -6802,18 +6818,6 @@ spec:
                             type: object
                         type: object
                     type: object
-                  maxBackoff:
-                    default: 5s
-                    description: '`maxBackoff` is the maximum backoff time for client
-                      connection between retries.'
-                    type: string
-                  maxRetries:
-                    default: 2
-                    description: '`maxRetries` is the maximum number of retries for
-                      client connections.'
-                    format: int32
-                    minimum: 0
-                    type: integer
                   microservices:
                     description: Loki configuration for "Microservices" mode. Use
                       this option when Loki is installed using the microservices deployment
@@ -6919,11 +6923,6 @@ spec:
                             type: object
                         type: object
                     type: object
-                  minBackoff:
-                    default: 1s
-                    description: '`minBackoff` is the initial backoff time for client
-                      connection between retries.'
-                    type: string
                   mode:
                     default: Monolithic
                     description: '`mode` must be set according to the installation
@@ -7038,19 +7037,6 @@ spec:
                           service that points to both the ingester and the querier.'
                         type: string
                     type: object
-                  staticLabels:
-                    additionalProperties:
-                      type: string
-                    default:
-                      app: netobserv-flowcollector
-                    description: '`staticLabels` is a map of common labels to set
-                      on each flow.'
-                    type: object
-                  timeout:
-                    default: 10s
-                    description: '`timeout` is the maximum time connection / request
-                      limit. A timeout of zero means no timeout.'
-                    type: string
                 type: object
               namespace:
                 default: netobserv
@@ -7068,24 +7054,6 @@ spec:
                       in the flows data. This is useful in a multi-cluster context.
                       When using OpenShift, leave empty to make it automatically determined.'
                     type: string
-                  conversationEndTimeout:
-                    default: 10s
-                    description: '`conversationEndTimeout` is the time to wait after
-                      a network flow is received, to consider the conversation ended.
-                      This delay is ignored when a FIN packet is collected for TCP
-                      flows (see `conversationTerminatingTimeout` instead).'
-                    type: string
-                  conversationHeartbeatInterval:
-                    default: 30s
-                    description: '`conversationHeartbeatInterval` is the time to wait
-                      between "tick" events of a conversation'
-                    type: string
-                  conversationTerminatingTimeout:
-                    default: 5s
-                    description: '`conversationTerminatingTimeout` is the time to
-                      wait from detected FIN flag to end a conversation. Only relevant
-                      for TCP flows.'
-                    type: string
                   debug:
                     description: '`debug` allows setting some aspects of the internal
                       configuration of the flow processor. This section is aimed exclusively
@@ -7093,6 +7061,35 @@ spec:
                       as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
                       do it at their own risk.'
                     properties:
+                      conversationEndTimeout:
+                        default: 10s
+                        description: '`conversationEndTimeout` is the time to wait
+                          after a network flow is received, to consider the conversation
+                          ended. This delay is ignored when a FIN packet is collected
+                          for TCP flows (see `conversationTerminatingTimeout` instead).'
+                        type: string
+                      conversationHeartbeatInterval:
+                        default: 30s
+                        description: '`conversationHeartbeatInterval` is the time
+                          to wait between "tick" events of a conversation'
+                        type: string
+                      conversationTerminatingTimeout:
+                        default: 5s
+                        description: '`conversationTerminatingTimeout` is the time
+                          to wait from detected FIN flag to end a conversation. Only
+                          relevant for TCP flows.'
+                        type: string
+                      dropUnusedFields:
+                        default: true
+                        description: '`dropUnusedFields` allows, when set to `true`,
+                          to drop fields that are known to be unused by OVS, to save
+                          storage space.'
+                        type: boolean
+                      enableKubeProbes:
+                        default: true
+                        description: '`enableKubeProbes` is a flag to enable or disable
+                          Kubernetes liveness and readiness probes'
+                        type: boolean
                       env:
                         additionalProperties:
                           type: string
@@ -7103,26 +7100,56 @@ spec:
                           descriptor, as they are only useful in edge debug or support
                           scenarios.'
                         type: object
+                      healthPort:
+                        default: 8080
+                        description: '`healthPort` is a collector HTTP port in the
+                          Pod that exposes the health check API'
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      lokiMaxBackoff:
+                        default: 5s
+                        description: '`lokiMaxBackoff` is the maximum backoff time
+                          for loki client connection between retries.'
+                        type: string
+                      lokiMaxRetries:
+                        default: 2
+                        description: '`lokiMaxRetries` is the maximum number of retries
+                          for loki client connections.'
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      lokiMinBackoff:
+                        default: 1s
+                        description: '`lokiMinBackoff` is the initial backoff time
+                          for loki client connection between retries.'
+                        type: string
+                      lokiStaticLabels:
+                        additionalProperties:
+                          type: string
+                        default:
+                          app: netobserv-flowcollector
+                        description: '`lokiStaticLabels` is a map of common labels
+                          to set on each flow in loki storage.'
+                        type: object
+                      port:
+                        default: 2055
+                        description: Port of the flow collector (host port). By convention,
+                          some values are forbidden. It must be greater than 1024
+                          and different from 4500, 4789 and 6081.
+                        format: int32
+                        maximum: 65535
+                        minimum: 1025
+                        type: integer
+                      profilePort:
+                        description: '`profilePort` allows setting up a Go pprof profiler
+                          listening to this port'
+                        format: int32
+                        maximum: 65535
+                        minimum: 0
+                        type: integer
                     type: object
-                  dropUnusedFields:
-                    default: true
-                    description: '`dropUnusedFields` allows, when set to `true`, to
-                      drop fields that are known to be unused by OVS, to save storage
-                      space.'
-                    type: boolean
-                  enableKubeProbes:
-                    default: true
-                    description: '`enableKubeProbes` is a flag to enable or disable
-                      Kubernetes liveness and readiness probes'
-                    type: boolean
-                  healthPort:
-                    default: 8080
-                    description: '`healthPort` is a collector HTTP port in the Pod
-                      that exposes the health check API'
-                    format: int32
-                    maximum: 65535
-                    minimum: 1
-                    type: integer
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy
@@ -7710,6 +7737,23 @@ spec:
                     - EndedConversations
                     - All
                     type: string
+                  lokiBatchSize:
+                    default: 102400
+                    description: '`lokiBatchSize` is the maximum batch size (in bytes)
+                      of loki logs to accumulate before sending.'
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  lokiBatchWait:
+                    default: 1s
+                    description: '`lokiBatchWait` is the maximum time to wait before
+                      sending a loki batch.'
+                    type: string
+                  lokiTimeout:
+                    default: 10s
+                    description: '`lokiTimeout` is the maximum loki time connection
+                      / request limit. A timeout of zero means no timeout.'
+                    type: string
                   metrics:
                     description: '`Metrics` define the processor configuration regarding
                       metrics'
@@ -7883,22 +7927,6 @@ spec:
                       multi clusters feature. This will add clusterName label to flows
                       data
                     type: boolean
-                  port:
-                    default: 2055
-                    description: Port of the flow collector (host port). By convention,
-                      some values are forbidden. It must be greater than 1024 and
-                      different from 4500, 4789 and 6081.
-                    format: int32
-                    maximum: 65535
-                    minimum: 1025
-                    type: integer
-                  profilePort:
-                    description: '`profilePort` allows setting up a Go pprof profiler
-                      listening to this port'
-                    format: int32
-                    maximum: 65535
-                    minimum: 0
-                    type: integer
                   resources:
                     default:
                       limits:
