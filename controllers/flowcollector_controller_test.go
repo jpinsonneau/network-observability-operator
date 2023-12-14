@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -8,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
+
 	rbacv1 "k8s.io/api/rbac/v1"
 	kerr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,6 +22,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	. "github.com/netobserv/network-observability-operator/controllers/controllerstest"
+	"github.com/netobserv/network-observability-operator/pkg/helper"
 	"github.com/netobserv/network-observability-operator/pkg/test"
 )
 
@@ -37,6 +42,18 @@ var updateCR = func(key types.NamespacedName, updater func(*flowslatest.FlowColl
 
 // nolint:cyclop
 func flowCollectorControllerSpecs() {
+	crdPath, err := filepath.Abs("../config/crd/bases/flows.netobserv.io_flowcollectors.yaml")
+	if err != nil {
+		log.Fatalf("can't read CRD path %v", err)
+	}
+	crdBytes, err := os.ReadFile(crdPath)
+	if err != nil {
+		log.Fatalf("can't read CRD file %v", err)
+	}
+	err = helper.ParseCRD(crdBytes)
+	if err != nil {
+		log.Fatalf("can't parse CRD %v", err)
+	}
 
 	const operatorNamespace = "main-namespace"
 	const otherNamespace = "other-namespace"
@@ -80,11 +97,11 @@ func flowCollectorControllerSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: flowslatest.DebugProcessorConfig{
+						Debug: &flowslatest.DebugProcessorConfig{
 							Env: map[string]string{
 								"GOGC": "200",
 							},
-							Port: 9999,
+							Port: ptr.To(int32(9999)),
 							ConversationHeartbeatInterval: &metav1.Duration{
 								Duration: conntrackHeartbeatInterval,
 							},
@@ -152,13 +169,13 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Debug: flowslatest.DebugProcessorConfig{
+					Debug: &flowslatest.DebugProcessorConfig{
 						Env: map[string]string{
 							// we'll test that env vars are sorted, to keep idempotency
 							"GOMAXPROCS": "33",
 							"GOGC":       "400",
 						},
-						Port: 7891,
+						Port: ptr.To(int32(7891)),
 						ConversationHeartbeatInterval: &metav1.Duration{
 							Duration: conntrackHeartbeatInterval,
 						},
@@ -236,7 +253,7 @@ func flowCollectorControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Debug.Port = 9999
+				fc.Spec.Processor.Debug.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})

@@ -6,6 +6,7 @@ import (
 	flowslatest "github.com/netobserv/network-observability-operator/api/v1beta2"
 	"github.com/netobserv/network-observability-operator/controllers/constants"
 	"github.com/netobserv/network-observability-operator/pkg/metrics"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -169,4 +170,106 @@ func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
 		return spec.Namespace
 	}
 	return constants.DefaultOperatorNamespace
+}
+
+func GetDebugAgentConfig(specConfig *flowslatest.DebugAgentConfig) flowslatest.DebugAgentConfig {
+	debugConfig := flowslatest.DebugAgentConfig{
+		Env: map[string]string{},
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+	}
+
+	return debugConfig
+}
+
+func GetDebugProcessorConfig(specConfig *flowslatest.DebugProcessorConfig) flowslatest.DebugProcessorConfig {
+	debugConfig := flowslatest.DebugProcessorConfig{
+		Env:                            map[string]string{},
+		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "port")),
+		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "healthPort")),
+		ProfilePort:                    ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "profilePort")),
+		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorDebugPath, "enableKubeProbes")),
+		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorDebugPath, "dropUnusedFields")),
+		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationHeartbeatInterval")),
+		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationEndTimeout")),
+		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationTerminatingTimeout")),
+		LokiMinBackoff:                 ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "lokiMinBackoff")),
+		LokiMaxBackoff:                 ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "lokiMaxBackoff")),
+		LokiMaxRetries:                 ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "lokiMaxRetries")),
+		LokiStaticLabels:               ptr.To(GetFieldDefaultMapString(ProcessorDebugPath, "lokiStaticLabels")),
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+		if specConfig.Port != nil && *specConfig.Port > 0 {
+			debugConfig.Port = specConfig.Port
+		}
+		if specConfig.HealthPort != nil && *specConfig.HealthPort > 0 {
+			debugConfig.HealthPort = specConfig.HealthPort
+		}
+		if specConfig.ProfilePort != nil && *specConfig.ProfilePort > 0 {
+			debugConfig.ProfilePort = specConfig.ProfilePort
+		}
+		if specConfig.EnableKubeProbes != nil {
+			debugConfig.EnableKubeProbes = specConfig.EnableKubeProbes
+		}
+		if specConfig.DropUnusedFields != nil {
+			debugConfig.DropUnusedFields = specConfig.DropUnusedFields
+		}
+		if specConfig.ConversationHeartbeatInterval != nil {
+			debugConfig.ConversationHeartbeatInterval = specConfig.ConversationHeartbeatInterval
+		}
+		if specConfig.ConversationEndTimeout != nil {
+			debugConfig.ConversationEndTimeout = specConfig.ConversationEndTimeout
+		}
+		if specConfig.ConversationTerminatingTimeout != nil {
+			debugConfig.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
+		}
+		if specConfig.LokiMinBackoff != nil {
+			debugConfig.LokiMinBackoff = specConfig.LokiMinBackoff
+		}
+		if specConfig.LokiMaxBackoff != nil {
+			debugConfig.LokiMaxBackoff = specConfig.LokiMaxBackoff
+		}
+		if specConfig.LokiMaxRetries != nil {
+			debugConfig.LokiMaxRetries = specConfig.LokiMaxRetries
+		}
+		if specConfig.LokiStaticLabels != nil {
+			debugConfig.LokiStaticLabels = specConfig.LokiStaticLabels
+		}
+	}
+
+	return debugConfig
+}
+
+func GetDebugPluginConfig(specConfig *flowslatest.DebugPluginConfig) flowslatest.DebugPluginConfig {
+	debugConfig := flowslatest.DebugPluginConfig{
+		Env:      map[string]string{},
+		Args:     []string{},
+		Register: ptr.To(GetFieldDefaultBool(PluginDebugPath, "register")),
+		Port:     ptr.To(GetFieldDefaultInt32(PluginDebugPath, "port")),
+	}
+
+	if specConfig != nil {
+		if len(specConfig.Env) > 0 {
+			debugConfig.Env = specConfig.Env
+		}
+		if len(specConfig.Args) > 0 {
+			debugConfig.Args = specConfig.Args
+		}
+		if specConfig.Register != nil {
+			debugConfig.Register = specConfig.Register
+		}
+		if specConfig.Port != nil && *specConfig.Port > 0 {
+			debugConfig.Port = specConfig.Port
+		}
+	}
+
+	return debugConfig
 }

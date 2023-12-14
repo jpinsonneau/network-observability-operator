@@ -2,6 +2,7 @@ package flp
 
 import (
 	"fmt"
+	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -23,8 +24,11 @@ import (
 )
 
 const (
-	timeout  = test.Timeout
-	interval = test.Interval
+	timeout                     = test.Timeout
+	interval                    = test.Interval
+	conntrackEndTimeout         = 10 * time.Second
+	conntrackTerminatingTimeout = 5 * time.Second
+	conntrackHeartbeatInterval  = 30 * time.Second
 )
 
 var (
@@ -85,7 +89,7 @@ func ControllerSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: flowslatest.DebugProcessorConfig{
+						Debug: &flowslatest.DebugProcessorConfig{
 							Env: map[string]string{
 								"GOGC": "200",
 							},
@@ -175,13 +179,13 @@ func ControllerSpecs() {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Debug: flowslatest.DebugProcessorConfig{
+					Debug: &flowslatest.DebugProcessorConfig{
 						Env: map[string]string{
 							// we'll test that env vars are sorted, to keep idempotency
 							"GOMAXPROCS": "33",
 							"GOGC":       "400",
 						},
-						Port: 7891,
+						Port: ptr.To(int32(7891)),
 						ConversationHeartbeatInterval: &metav1.Duration{
 							Duration: conntrackHeartbeatInterval,
 						},
@@ -724,7 +728,7 @@ func ControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Debug.Port = 9999
+				fc.Spec.Processor.Debug.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})

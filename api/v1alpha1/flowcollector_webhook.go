@@ -382,3 +382,13 @@ func Convert_v1beta2_DebugProcessorConfig_To_v1alpha1_DebugConfig(in *v1beta2.De
 	out.Env = in.Env
 	return nil
 }
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1alpha1
+// nolint:golint,stylecheck,revive
+func Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s apiconversion.Scope) error {
+	out.Debug = &v1beta2.DebugAgentConfig{
+		Env: in.Debug.Env,
+	}
+	return autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)
+}

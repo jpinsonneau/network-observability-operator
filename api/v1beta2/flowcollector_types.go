@@ -210,7 +210,7 @@ type FlowCollectorEBPF struct {
 	// `excludeInterfaces` contains the interface names that are excluded from flow tracing.
 	// An entry enclosed by slashes, such as `/br-/`, is matched as a regular expression.
 	// Otherwise it is matched as a case-sensitive string.
-	//+kubebuilder:default=lo;
+	//+kubebuilder:default:=lo;
 	//+optional
 	ExcludeInterfaces []string `json:"excludeInterfaces"`
 
@@ -236,7 +236,7 @@ type FlowCollectorEBPF struct {
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugAgentConfig `json:"debug,omitempty"`
+	Debug *DebugAgentConfig `json:"debug,omitempty"`
 
 	// List of additional features to enable. They are all disabled by default. Enabling additional features might have performance impacts. Possible values are:<br>
 	// - `PacketDrop`: enable the packets drop flows logging feature. This feature requires mounting
@@ -463,7 +463,7 @@ type FlowCollectorFLP struct {
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugProcessorConfig `json:"debug,omitempty"`
+	Debug *DebugProcessorConfig `json:"debug,omitempty"`
 }
 
 type HPAStatus string
@@ -697,7 +697,7 @@ type FlowCollectorConsolePlugin struct {
 	// This section is aimed exclusively for debugging and fine-grained performance optimizations,
 	// such as `GOGC` and `GOMAXPROCS` env vars. Users setting its values do it at their own risk.
 	// +optional
-	Debug DebugPluginConfig `json:"debug,omitempty"`
+	Debug *DebugPluginConfig `json:"debug,omitempty"`
 }
 
 // Configuration of the port to service name translation feature of the console plugin
@@ -864,64 +864,72 @@ type DebugProcessorConfig struct {
 	//+kubebuilder:validation:Minimum=1025
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=2055
+	//+optional
 	// Port of the flow collector (host port).
 	// By convention, some values are forbidden. It must be greater than 1024 and different from
 	// 4500, 4789 and 6081.
-	Port int32 `json:"port,omitempty"`
+	Port *int32 `json:"port,omitempty"`
 
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=8080
+	//+optional
 	// `healthPort` is a collector HTTP port in the Pod that exposes the health check API
-	HealthPort int32 `json:"healthPort,omitempty"`
+	HealthPort *int32 `json:"healthPort,omitempty"`
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:validation:Maximum=65535
+	//+kubebuilder:default:=6060
 	//+optional
 	// `profilePort` allows setting up a Go pprof profiler listening to this port
-	ProfilePort int32 `json:"profilePort,omitempty"`
+	ProfilePort *int32 `json:"profilePort,omitempty"`
 
 	//+kubebuilder:default:=true
+	//+optional
 	// `enableKubeProbes` is a flag to enable or disable Kubernetes liveness and readiness probes
 	EnableKubeProbes *bool `json:"enableKubeProbes,omitempty"`
 
 	//+kubebuilder:default:=true
+	//+optional
 	// `dropUnusedFields` allows, when set to `true`, to drop fields that are known to be unused by OVS, to save storage space.
 	DropUnusedFields *bool `json:"dropUnusedFields,omitempty"`
 
 	//+kubebuilder:default:="30s"
-	// +optional
+	//+optional
 	// `conversationHeartbeatInterval` is the time to wait between "tick" events of a conversation
 	ConversationHeartbeatInterval *metav1.Duration `json:"conversationHeartbeatInterval,omitempty"`
 
 	//+kubebuilder:default:="10s"
-	// +optional
+	//+optional
 	// `conversationEndTimeout` is the time to wait after a network flow is received, to consider the conversation ended.
 	// This delay is ignored when a FIN packet is collected for TCP flows (see `conversationTerminatingTimeout` instead).
 	ConversationEndTimeout *metav1.Duration `json:"conversationEndTimeout,omitempty"`
 
 	//+kubebuilder:default:="5s"
-	// +optional
+	//+optional
 	// `conversationTerminatingTimeout` is the time to wait from detected FIN flag to end a conversation. Only relevant for TCP flows.
 	ConversationTerminatingTimeout *metav1.Duration `json:"conversationTerminatingTimeout,omitempty"`
 
-	//+kubebuilder:default="1s"
+	//+kubebuilder:default:="1s"
+	//+optional
 	// `lokiMinBackoff` is the initial backoff time for loki client connection between retries.
 	LokiMinBackoff *metav1.Duration `json:"lokiMinBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 
-	//+kubebuilder:default="5s"
+	//+kubebuilder:default:="5s"
+	//+optional
 	// `lokiMaxBackoff` is the maximum backoff time for loki client connection between retries.
 	LokiMaxBackoff *metav1.Duration `json:"lokiMaxBackoff,omitempty"` // Warning: keep as pointer, else default is ignored
 
 	//+kubebuilder:validation:Minimum=0
 	//+kubebuilder:default:=2
+	//+optional
 	// `lokiMaxRetries` is the maximum number of retries for loki client connections.
 	LokiMaxRetries *int32 `json:"lokiMaxRetries,omitempty"`
 
 	//+kubebuilder:default:={"app":"netobserv-flowcollector"}
-	// +optional
+	//+optional
 	// `lokiStaticLabels` is a map of common labels to set on each flow in loki storage.
-	LokiStaticLabels map[string]string `json:"lokiStaticLabels"`
+	LokiStaticLabels *map[string]string `json:"lokiStaticLabels,omitempty"`
 }
 
 // `DebugConfig` allows tweaking some aspects of the internal configuration of the console plugin.
@@ -942,6 +950,7 @@ type DebugPluginConfig struct {
 	Args []string `json:"args,omitempty"`
 
 	//+kubebuilder:default:=true
+	//+optional
 	// `register` allows, when set to `true`, to automatically register the provided console plugin with the OpenShift Console operator.
 	// When set to `false`, you can still register it manually by editing console.operator.openshift.io/cluster with the following command:
 	// `oc patch console.operator.openshift.io cluster --type='json' -p '[{"op": "add", "path": "/spec/plugins/-", "value": "netobserv-plugin"}]'`
@@ -950,8 +959,9 @@ type DebugPluginConfig struct {
 	//+kubebuilder:validation:Minimum=1
 	//+kubebuilder:validation:Maximum=65535
 	//+kubebuilder:default:=9001
+	//+optional
 	// `port` is the plugin service port. Do not use 9002, which is reserved for metrics.
-	Port int32 `json:"port,omitempty"`
+	Port *int32 `json:"port,omitempty"`
 }
 
 // Add more exporter types below

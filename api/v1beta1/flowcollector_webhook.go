@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/netobserv/network-observability-operator/api/v1beta2"
 	utilconversion "github.com/netobserv/network-observability-operator/pkg/conversion"
@@ -82,10 +83,24 @@ func Convert_v1beta1_FlowCollector_To_v1beta2_FlowCollector(in *FlowCollector, o
 	out.Spec.Processor.LokiTimeout = in.Spec.Loki.Timeout
 	out.Spec.Processor.LokiBatchWait = in.Spec.Loki.BatchWait
 	out.Spec.Processor.LokiBatchSize = in.Spec.Loki.BatchSize
-	out.Spec.Processor.Debug.LokiMinBackoff = in.Spec.Loki.MinBackoff
-	out.Spec.Processor.Debug.LokiMaxBackoff = in.Spec.Loki.MaxBackoff
-	out.Spec.Processor.Debug.LokiMaxRetries = in.Spec.Loki.MaxRetries
-	out.Spec.Processor.Debug.LokiStaticLabels = in.Spec.Loki.StaticLabels
+	// fill cross object (Loki -> Processor) debug config
+	debugPath := helper.ProcessorDebugPath
+	out.Spec.Processor.Debug.LokiMinBackoff = helper.GetDebugDurationValue(debugPath, "lokiMinBackoff", in.Spec.Loki.MinBackoff)
+	out.Spec.Processor.Debug.LokiMaxBackoff = helper.GetDebugDurationValue(debugPath, "lokiMaxBackoff", in.Spec.Loki.MaxBackoff)
+	out.Spec.Processor.Debug.LokiMaxRetries = helper.GetDebugInt32Value(debugPath, "lokiMaxRetries", in.Spec.Loki.MaxRetries)
+	out.Spec.Processor.Debug.LokiStaticLabels = helper.GetDebugMapValue(debugPath, "lokiStaticLabels", &in.Spec.Loki.StaticLabels)
+	// clear Processor debug config if default
+	if reflect.DeepEqual(helper.GetDebugProcessorConfig(nil), helper.GetDebugProcessorConfig(out.Spec.Processor.Debug)) {
+		out.Spec.Processor.Debug = nil
+	}
+	// clear Agent debug config if default
+	if reflect.DeepEqual(helper.GetDebugAgentConfig(nil), helper.GetDebugAgentConfig(out.Spec.Agent.EBPF.Debug)) {
+		out.Spec.Agent.EBPF.Debug = nil
+	}
+	// clear Plugin debug config if default
+	if reflect.DeepEqual(helper.GetDebugPluginConfig(nil), helper.GetDebugPluginConfig(out.Spec.ConsolePlugin.Debug)) {
+		out.Spec.ConsolePlugin.Debug = nil
+	}
 	return nil
 }
 
@@ -98,10 +113,12 @@ func Convert_v1beta2_FlowCollector_To_v1beta1_FlowCollector(in *v1beta2.FlowColl
 	out.Spec.Loki.Timeout = in.Spec.Processor.LokiTimeout
 	out.Spec.Loki.BatchWait = in.Spec.Processor.LokiBatchWait
 	out.Spec.Loki.BatchSize = in.Spec.Processor.LokiBatchSize
-	out.Spec.Loki.MinBackoff = in.Spec.Processor.Debug.LokiMinBackoff
-	out.Spec.Loki.MaxBackoff = in.Spec.Processor.Debug.LokiMaxBackoff
-	out.Spec.Loki.MaxRetries = in.Spec.Processor.Debug.LokiMaxRetries
-	out.Spec.Loki.StaticLabels = in.Spec.Processor.Debug.LokiStaticLabels
+	if in.Spec.Processor.Debug != nil {
+		out.Spec.Loki.MinBackoff = in.Spec.Processor.Debug.LokiMinBackoff
+		out.Spec.Loki.MaxBackoff = in.Spec.Processor.Debug.LokiMaxBackoff
+		out.Spec.Loki.MaxRetries = in.Spec.Processor.Debug.LokiMaxRetries
+		out.Spec.Loki.StaticLabels = helper.GetValueOrDefaultMapString(helper.ProcessorDebugPath, "lokiStaticLabels", in.Spec.Processor.Debug.LokiStaticLabels)
+	}
 	return nil
 }
 
@@ -153,16 +170,14 @@ func Convert_v1beta1_FlowCollectorLoki_To_v1beta2_FlowCollectorLoki(in *FlowColl
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1beta1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
-	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
-}
-
-// This function need to be manually created because conversion-gen not able to create it intentionally because
-// we have new defined fields in v1beta2 not in v1beta1
-// nolint:golint,stylecheck,revive
 func Convert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in *FlowCollectorConsolePlugin, out *v1beta2.FlowCollectorConsolePlugin, s apiconversion.Scope) error {
-	out.Debug.Register = in.Register
-	out.Debug.Port = in.Port
+	debugPath := helper.PluginDebugPath
+	out.Debug = &v1beta2.DebugPluginConfig{
+		Env:      map[string]string{},
+		Args:     []string{},
+		Register: helper.GetDebugBoolValue(debugPath, "register", in.Register),
+		Port:     helper.GetDebugInt32Value(debugPath, "port", &in.Port),
+	}
 	return autoConvert_v1beta1_FlowCollectorConsolePlugin_To_v1beta2_FlowCollectorConsolePlugin(in, out, s)
 }
 
@@ -195,6 +210,13 @@ func Convert_v1beta1_FlowCollectorSpec_To_v1beta2_FlowCollectorSpec(in *FlowColl
 		out.Exporters = append(out.Exporters, outExporter)
 	}
 	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in *v1beta2.FLPMetrics, out *FLPMetrics, s apiconversion.Scope) error {
+	return autoConvert_v1beta2_FLPMetrics_To_v1beta1_FLPMetrics(in, out, s)
 }
 
 // This function need to be manually created because conversion-gen not able to create it intentionally because
@@ -250,22 +272,28 @@ func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollec
 		logTypes := v1beta2.FLPLogTypes(utilconversion.UpperToPascal(*in.LogTypes))
 		out.LogTypes = &logTypes
 	}
-	out.Debug.Port = in.Port
-	out.Debug.HealthPort = in.HealthPort
-	out.Debug.ProfilePort = in.ProfilePort
-	out.Debug.EnableKubeProbes = in.EnableKubeProbes
-	out.Debug.DropUnusedFields = in.DropUnusedFields
-	out.Debug.ConversationHeartbeatInterval = in.ConversationHeartbeatInterval
-	out.Debug.ConversationEndTimeout = in.ConversationEndTimeout
-	out.Debug.ConversationTerminatingTimeout = in.ConversationTerminatingTimeout
+	debugPath := helper.ProcessorDebugPath
+	out.Debug = &v1beta2.DebugProcessorConfig{
+		Env:                            map[string]string{},
+		Port:                           helper.GetDebugInt32Value(debugPath, "port", &in.Port),
+		HealthPort:                     helper.GetDebugInt32Value(debugPath, "healthPort", &in.HealthPort),
+		ProfilePort:                    helper.GetDebugInt32Value(debugPath, "profilePort", &in.ProfilePort),
+		EnableKubeProbes:               helper.GetDebugBoolValue(debugPath, "enableKubeProbes", in.EnableKubeProbes),
+		DropUnusedFields:               helper.GetDebugBoolValue(debugPath, "dropUnusedFields", in.DropUnusedFields),
+		ConversationHeartbeatInterval:  helper.GetDebugDurationValue(debugPath, "conversationHeartbeatInterval", in.ConversationHeartbeatInterval),
+		ConversationEndTimeout:         helper.GetDebugDurationValue(debugPath, "conversationEndTimeout", in.ConversationEndTimeout),
+		ConversationTerminatingTimeout: helper.GetDebugDurationValue(debugPath, "conversationTerminatingTimeout", in.ConversationTerminatingTimeout),
+	}
 	return autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s)
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
 // nolint:golint,stylecheck,revive
 func Convert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in *v1beta2.FlowCollectorConsolePlugin, out *FlowCollectorConsolePlugin, s apiconversion.Scope) error {
-	out.Register = in.Debug.Register
-	out.Port = in.Debug.Port
+	if in.Debug != nil {
+		out.Register = in.Debug.Register
+		out.Port = helper.GetValueOrDefaultInt32(helper.PluginDebugPath, "port", in.Debug.Port)
+	}
 	return autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1beta1_FlowCollectorConsolePlugin(in, out, s)
 }
 
@@ -288,6 +316,17 @@ func Convert_v1beta2_FlowCollectorFLP_To_v1beta1_FlowCollectorFLP(in *v1beta2.Fl
 	if in.LogTypes != nil {
 		str := utilconversion.PascalToUpper(string(*in.LogTypes), '_')
 		out.LogTypes = &str
+	}
+	if in.Debug != nil {
+		debugPath := helper.ProcessorDebugPath
+		out.Port = helper.GetValueOrDefaultInt32(debugPath, "port", in.Debug.Port)
+		out.HealthPort = helper.GetValueOrDefaultInt32(debugPath, "healthPort", in.Debug.HealthPort)
+		out.ProfilePort = helper.GetValueOrDefaultInt32(debugPath, "profilePort", in.Debug.ProfilePort)
+		out.EnableKubeProbes = in.Debug.EnableKubeProbes
+		out.DropUnusedFields = in.Debug.DropUnusedFields
+		out.ConversationHeartbeatInterval = in.Debug.ConversationHeartbeatInterval
+		out.ConversationEndTimeout = in.Debug.ConversationEndTimeout
+		out.ConversationTerminatingTimeout = in.Debug.ConversationTerminatingTimeout
 	}
 	return nil
 }
@@ -399,4 +438,24 @@ func Convert_v1beta2_FlowCollectorExporter_To_v1beta1_FlowCollectorExporter(in *
 func Convert_v1beta2_DebugProcessorConfig_To_v1beta1_DebugConfig(in *v1beta2.DebugProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s apiconversion.Scope) error {
+	out.Debug = &v1beta2.DebugAgentConfig{
+		Env: in.Debug.Env,
+	}
+	return autoConvert_v1beta1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)
+}
+
+// This function need to be manually created because conversion-gen not able to create it intentionally because
+// we have new defined fields in v1beta2 not in v1beta1
+// nolint:golint,stylecheck,revive
+func Convert_v1beta2_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in *v1beta2.FlowCollectorEBPF, out *FlowCollectorEBPF, s apiconversion.Scope) error {
+	if in.Debug != nil {
+		out.Debug.Env = in.Debug.Env
+	}
+	return autoConvert_v1beta2_FlowCollectorEBPF_To_v1beta1_FlowCollectorEBPF(in, out, s)
 }

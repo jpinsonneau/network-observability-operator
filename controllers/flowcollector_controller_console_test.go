@@ -143,7 +143,9 @@ func flowCollectorConsolePluginSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.ConsolePlugin.Debug.Port = 9099
+				fc.Spec.ConsolePlugin.Debug = &flowslatest.DebugPluginConfig{
+					Port: ptr.To(int32(9099)),
+				}
 				fc.Spec.ConsolePlugin.Replicas = ptr.To(int32(2))
 				fc.Spec.ConsolePlugin.Autoscaler.Status = flowslatest.HPAStatusDisabled
 				return k8sClient.Update(ctx, &fc)

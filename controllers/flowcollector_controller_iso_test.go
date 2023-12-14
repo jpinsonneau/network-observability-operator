@@ -70,10 +70,10 @@ func flowCollectorIsoSpecs() {
 				LokiBatchSize:              100,
 				MultiClusterDeployment:     ptr.To(true),
 				ClusterName:                "testCluster",
-				Debug: flowslatest.DebugProcessorConfig{
-					Port:                           12345,
-					HealthPort:                     12346,
-					ProfilePort:                    0,
+				Debug: &flowslatest.DebugProcessorConfig{
+					Port:                           ptr.To(int32(12345)),
+					HealthPort:                     ptr.To(int32(12346)),
+					ProfilePort:                    ptr.To(int32(12347)),
 					ConversationHeartbeatInterval:  &metav1.Duration{Duration: time.Second},
 					ConversationEndTimeout:         &metav1.Duration{Duration: time.Second},
 					ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Second},
@@ -82,7 +82,7 @@ func flowCollectorIsoSpecs() {
 					LokiMinBackoff:                 &metav1.Duration{Duration: time.Second},
 					LokiMaxBackoff:                 &metav1.Duration{Duration: time.Second},
 					LokiMaxRetries:                 &zero,
-					LokiStaticLabels:               map[string]string{},
+					LokiStaticLabels:               &map[string]string{},
 				},
 				LogTypes: &outputRecordTypes,
 				Metrics: flowslatest.FLPMetrics{
@@ -117,7 +117,7 @@ func flowCollectorIsoSpecs() {
 					CacheActiveTimeout: "5s",
 					CacheMaxFlows:      100,
 					ImagePullPolicy:    "Always",
-					Debug:              flowslatest.DebugAgentConfig{},
+					Debug:              &flowslatest.DebugAgentConfig{},
 					LogLevel:           "trace",
 					Resources:          v1.ResourceRequirements{Limits: nil, Requests: nil},
 					Interfaces:         []string{},
@@ -131,9 +131,9 @@ func flowCollectorIsoSpecs() {
 				Enable:          ptr.To(true),
 				Replicas:        &zero,
 				ImagePullPolicy: "Always",
-				Debug: flowslatest.DebugPluginConfig{
+				Debug: &flowslatest.DebugPluginConfig{
 					Register: ptr.To(false),
-					Port:     12345,
+					Port:     ptr.To(int32(12345)),
 				},
 				Resources:  v1.ResourceRequirements{Limits: nil, Requests: nil},
 				LogLevel:   "trace",

@@ -2,7 +2,6 @@ package flp
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/netobserv/flowlogs-pipeline/pkg/api"
 	"github.com/netobserv/flowlogs-pipeline/pkg/config"
@@ -18,10 +17,7 @@ import (
 )
 
 const (
-	conntrackTerminatingTimeout = 5 * time.Second
-	conntrackEndTimeout         = 10 * time.Second
-	conntrackHeartbeatInterval  = 30 * time.Second
-	clusterNameLabelName        = "K8S_ClusterName"
+	clusterNameLabelName = "K8S_ClusterName"
 )
 
 type PipelineBuilder struct {
@@ -83,14 +79,15 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	})
 
 	// loki stage (write) configuration
+	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         indexFields,
 			BatchSize:      int(b.desired.Processor.LokiBatchSize),
 			BatchWait:      helper.UnstructuredDuration(b.desired.Processor.LokiBatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(b.desired.Processor.Debug.LokiMaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(b.desired.Processor.Debug.LokiMaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(b.desired.Processor.Debug.LokiMinBackoff),
+			MaxBackoff:     helper.UnstructuredDuration(debugConfig.LokiMaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(debugConfig.LokiMaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(debugConfig.LokiMinBackoff),
 			StaticLabels:   model.LabelSet{},
 			Timeout:        helper.UnstructuredDuration(b.desired.Processor.LokiTimeout),
 			URL:            b.loki.IngesterURL,
@@ -99,7 +96,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			TenantID:       b.loki.TenantID,
 		}
 
-		for k, v := range b.desired.Processor.Debug.LokiStaticLabels {
+		for k, v := range *debugConfig.LokiStaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
@@ -268,22 +265,7 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-
-		terminatingTimeout := conntrackTerminatingTimeout
-		if b.desired.Processor.Debug.ConversationTerminatingTimeout != nil {
-			terminatingTimeout = b.desired.Processor.Debug.ConversationTerminatingTimeout.Duration
-		}
-
-		endTimeout := conntrackEndTimeout
-		if b.desired.Processor.Debug.ConversationEndTimeout != nil {
-			endTimeout = b.desired.Processor.Debug.ConversationEndTimeout.Duration
-		}
-
-		heartbeatInterval := conntrackHeartbeatInterval
-		if b.desired.Processor.Debug.ConversationHeartbeatInterval != nil {
-			heartbeatInterval = b.desired.Processor.Debug.ConversationHeartbeatInterval.Duration
-		}
-
+		debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
 			KeyDefinition: api.KeyDefinition{
 				FieldGroups: []api.FieldGroup{
@@ -304,9 +286,9 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 			Scheduling: []api.ConnTrackSchedulingGroup{
 				{
 					Selector:             nil, // Default group. Match all flowlogs
-					HeartbeatInterval:    api.Duration{Duration: heartbeatInterval},
-					EndConnectionTimeout: api.Duration{Duration: endTimeout},
-					TerminatingTimeout:   api.Duration{Duration: terminatingTimeout},
+					HeartbeatInterval:    api.Duration{Duration: debugConfig.ConversationHeartbeatInterval.Duration},
+					EndConnectionTimeout: api.Duration{Duration: debugConfig.ConversationEndTimeout.Duration},
+					TerminatingTimeout:   api.Duration{Duration: debugConfig.ConversationTerminatingTimeout.Duration},
 				},
 			},
 			TCPFlags: api.ConnTrackTCPFlags{
@@ -342,7 +324,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	}
 
 	// Filter-out unused fields?
-	if helper.PtrBool(b.desired.Processor.Debug.DropUnusedFields) {
+	if *helper.GetDebugProcessorConfig(b.desired.Processor.Debug).DropUnusedFields {
 		if helper.UseIPFIX(b.desired) {
 			rules := filters.GetOVSGoflowUnusedRules()
 			transformFilterRules = append(transformFilterRules, rules...)

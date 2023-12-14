@@ -93,9 +93,9 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 				}},
 			},
 			LogTypes: &outputRecordTypes,
-			Debug: flowslatest.DebugProcessorConfig{
-				Port:       2055,
-				HealthPort: 8080,
+			Debug: &flowslatest.DebugProcessorConfig{
+				Port:       ptr.To(int32(2055)),
+				HealthPort: ptr.To(int32(8080)),
 				LokiMinBackoff: &metav1.Duration{
 					Duration: 1,
 				},
@@ -103,7 +103,7 @@ func getConfig(lokiMode ...string) flowslatest.FlowCollectorSpec {
 					Duration: 300,
 				},
 				LokiMaxRetries:   ptr.To(int32(10)),
-				LokiStaticLabels: map[string]string{"app": "netobserv-flowcollector"},
+				LokiStaticLabels: &map[string]string{"app": "netobserv-flowcollector"},
 			},
 		},
 		Loki: getLoki(lokiMode...),
@@ -638,7 +638,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(*cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal(loki.Manual.IngesterURL, lokiCfg.URL)
@@ -687,7 +687,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 
 	params := decoded.Parameters
 	assert.Len(params, 6)
-	assert.Equal(cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
+	assert.Equal(*cfg.Processor.Debug.Port, int32(params[0].Ingest.Collector.Port))
 
 	lokiCfg := params[3].Write.Loki
 	assert.Equal("https://lokistack-gateway-http.ls-namespace.svc:8080/api/logs/v1/network/", lokiCfg.URL)

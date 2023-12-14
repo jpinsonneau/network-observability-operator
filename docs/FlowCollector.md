@@ -12821,6 +12821,7 @@ TLS client configuration for Loki URL.
           `profilePort` allows setting up a Go pprof profiler listening to this port<br/>
           <br/>
             <i>Format</i>: int32<br/>
+            <i>Default</i>: 6060<br/>
             <i>Minimum</i>: 0<br/>
             <i>Maximum</i>: 65535<br/>
         </td>

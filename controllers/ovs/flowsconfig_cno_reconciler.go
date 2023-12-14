@@ -106,7 +106,7 @@ func (c *FlowsConfigCNOController) desired(
 
 	return &flowsConfig{
 		FlowCollectorIPFIX: *corrected,
-		NodePort:           coll.Spec.Processor.Debug.Port,
+		NodePort:           *helper.GetDebugProcessorConfig(coll.Spec.Processor.Debug).Port,
 	}
 }
 

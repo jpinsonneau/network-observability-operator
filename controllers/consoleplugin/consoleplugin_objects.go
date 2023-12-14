@@ -64,6 +64,7 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, lo
 }
 
 func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
+	debugConfig := helper.GetDebugPluginConfig(b.desired.ConsolePlugin.Debug)
 	return &osv1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.PluginName,
@@ -73,7 +74,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 			Service: osv1alpha1.ConsolePluginService{
 				Name:      constants.PluginName,
 				Namespace: b.namespace,
-				Port:      b.desired.ConsolePlugin.Debug.Port,
+				Port:      *debugConfig.Port,
 				BasePath:  "/",
 			},
 			Proxy: []osv1alpha1.ConsolePluginProxy{{
@@ -83,7 +84,7 @@ func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
 				Service: osv1alpha1.ConsolePluginProxyServiceConfig{
 					Name:      constants.PluginName,
 					Namespace: b.namespace,
-					Port:      b.desired.ConsolePlugin.Debug.Port,
+					Port:      *debugConfig.Port,
 				},
 			}},
 		},
@@ -255,6 +256,7 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 }
 
 func (b *builder) mainService() *corev1.Service {
+	debugConfig := helper.GetDebugPluginConfig(b.desired.ConsolePlugin.Debug)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,
@@ -267,12 +269,12 @@ func (b *builder) mainService() *corev1.Service {
 		Spec: corev1.ServiceSpec{
 			Selector: b.selector,
 			Ports: []corev1.ServicePort{{
-				Port:     b.desired.ConsolePlugin.Debug.Port,
+				Port:     *debugConfig.Port,
 				Protocol: corev1.ProtocolTCP,
 				// Some Kubernetes versions might automatically set TargetPort to Port. We need to
 				// explicitly set it here so the reconcile loop verifies that the owned service
 				// is equal as the desired service
-				TargetPort: intstr.FromInt(int(b.desired.ConsolePlugin.Debug.Port)),
+				TargetPort: intstr.FromInt(int(*debugConfig.Port)),
 			}},
 		},
 	}

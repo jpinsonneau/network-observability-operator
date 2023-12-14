@@ -114,14 +114,14 @@ func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
 
 func (b *builder) NewIPFIXPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewCollectorPipeline("ipfix", api.IngestCollector{
-		Port:     int(b.desired.Processor.Debug.Port),
+		Port:     int(*helper.GetDebugProcessorConfig(b.desired.Processor.Debug).Port),
 		HostName: "0.0.0.0",
 	}))
 }
 
 func (b *builder) NewGRPCPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-		Port: int(b.desired.Processor.Debug.Port),
+		Port: int(*helper.GetDebugProcessorConfig(b.desired.Processor.Debug).Port),
 	}))
 }
 
@@ -156,13 +156,14 @@ func (b *builder) portProtocol() corev1.Protocol {
 }
 
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
+	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if hasHostPort {
 		ports = []corev1.ContainerPort{{
 			Name:          constants.FLPPortName,
-			HostPort:      b.desired.Processor.Debug.Port,
-			ContainerPort: b.desired.Processor.Debug.Port,
+			HostPort:      *debugConfig.Port,
+			ContainerPort: *debugConfig.Port,
 			Protocol:      b.portProtocol(),
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
@@ -172,7 +173,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 	ports = append(ports, corev1.ContainerPort{
 		Name:          healthServiceName,
-		ContainerPort: b.desired.Processor.Debug.HealthPort,
+		ContainerPort: *debugConfig.HealthPort,
 	})
 
 	ports = append(ports, corev1.ContainerPort{
@@ -180,10 +181,10 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		ContainerPort: b.desired.Processor.Metrics.Server.Port,
 	})
 
-	if b.desired.Processor.Debug.ProfilePort > 0 {
+	if debugConfig.ProfilePort != nil {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
-			ContainerPort: b.desired.Processor.Debug.ProfilePort,
+			ContainerPort: *debugConfig.ProfilePort,
 			Protocol:      corev1.ProtocolTCP,
 		})
 	}
@@ -204,9 +205,10 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}})
 
 	var envs []corev1.EnvVar
+	debugConfig = helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(b.desired.Processor.Debug.Env) {
+	for _, pair := range helper.KeySorted(debugConfig.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 	envs = append(envs, constants.EnvNoHTTP2)
@@ -221,7 +223,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		Ports:           ports,
 		Env:             envs,
 	}
-	if helper.PtrBool(b.desired.Processor.Debug.EnableKubeProbes) {
+	if *debugConfig.EnableKubeProbes {
 		container.LivenessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -306,18 +308,19 @@ func (b *builder) GetJSONConfig() (string, error) {
 			}
 		}
 	}
+	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
 	config := map[string]interface{}{
 		"log-level": b.desired.Processor.LogLevel,
 		"health": map[string]interface{}{
-			"port": b.desired.Processor.Debug.HealthPort,
+			"port": *debugConfig.HealthPort,
 		},
 		"pipeline":        b.pipeline.GetStages(),
 		"parameters":      b.pipeline.GetStageParams(),
 		"metricsSettings": metricsSettings,
 	}
-	if b.desired.Processor.Debug.ProfilePort > 0 {
+	if debugConfig.ProfilePort != nil {
 		config["profile"] = map[string]interface{}{
-			"port": b.desired.Processor.Debug.ProfilePort,
+			"port": *debugConfig.ProfilePort,
 		}
 	}
 
