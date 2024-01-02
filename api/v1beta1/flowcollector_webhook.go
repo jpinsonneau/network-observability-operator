@@ -284,7 +284,7 @@ func Convert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowCollec
 		ConversationEndTimeout:         helper.GetDebugDurationValue(debugPath, "conversationEndTimeout", in.ConversationEndTimeout),
 		ConversationTerminatingTimeout: helper.GetDebugDurationValue(debugPath, "conversationTerminatingTimeout", in.ConversationTerminatingTimeout),
 	}
-	return autoConvert_v1beta1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in, out, s)
+	return nil
 }
 
 // we have new defined fields in v1beta2 not in v1beta1
