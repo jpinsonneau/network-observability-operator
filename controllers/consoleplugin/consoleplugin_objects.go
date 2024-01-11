@@ -64,7 +64,7 @@ func newBuilder(ns, imageName string, desired *flowslatest.FlowCollectorSpec, lo
 }
 
 func (b *builder) consolePlugin() *osv1alpha1.ConsolePlugin {
-	debugConfig := helper.GetDebugPluginConfig(b.desired.ConsolePlugin.Debug)
+	debugConfig := helper.GetAdvancedPluginConfig(b.desired.ConsolePlugin.Advanced)
 	return &osv1alpha1.ConsolePlugin{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: constants.PluginName,
@@ -256,7 +256,7 @@ func (b *builder) autoScaler() *ascv2.HorizontalPodAutoscaler {
 }
 
 func (b *builder) mainService() *corev1.Service {
-	debugConfig := helper.GetDebugPluginConfig(b.desired.ConsolePlugin.Debug)
+	debugConfig := helper.GetAdvancedPluginConfig(b.desired.ConsolePlugin.Advanced)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      constants.PluginName,

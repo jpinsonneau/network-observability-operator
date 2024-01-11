@@ -119,7 +119,7 @@ func (r *CPReconciler) Reconcile(ctx context.Context, desired *flowslatest.FlowC
 
 func (r *CPReconciler) checkAutoPatch(ctx context.Context, desired *flowslatest.FlowCollector) error {
 	console := operatorsv1.Console{}
-	debugConfig := helper.GetDebugPluginConfig(desired.Spec.ConsolePlugin.Debug)
+	debugConfig := helper.GetAdvancedPluginConfig(desired.Spec.ConsolePlugin.Advanced)
 	reg := helper.UseConsolePlugin(&desired.Spec) && *debugConfig.Register
 	if err := r.Client.Get(ctx, types.NamespacedName{Name: "cluster"}, &console); err != nil {
 		// Console operator CR not found => warn but continue execution
@@ -247,6 +247,6 @@ func (r *CPReconciler) reconcileHPA(ctx context.Context, builder *builder, desir
 }
 
 func pluginNeedsUpdate(plg *osv1alpha1.ConsolePlugin, desired *pluginSpec) bool {
-	debugConfig := helper.GetDebugPluginConfig(desired.Debug)
+	debugConfig := helper.GetAdvancedPluginConfig(desired.Advanced)
 	return plg.Spec.Service.Port != *debugConfig.Port
 }

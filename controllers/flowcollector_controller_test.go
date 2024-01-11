@@ -97,7 +97,7 @@ func flowCollectorControllerSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: &flowslatest.DebugProcessorConfig{
+						Advanced: &flowslatest.AdvancedProcessorConfig{
 							Env: map[string]string{
 								"GOGC": "200",
 							},
@@ -169,7 +169,7 @@ func flowCollectorControllerSpecs() {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Debug: &flowslatest.DebugProcessorConfig{
+					Advanced: &flowslatest.AdvancedProcessorConfig{
 						Env: map[string]string{
 							// we'll test that env vars are sorted, to keep idempotency
 							"GOMAXPROCS": "33",
@@ -253,7 +253,7 @@ func flowCollectorControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Debug.Port = ptr.To(int32(9999))
+				fc.Spec.Processor.Advanced.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})

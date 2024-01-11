@@ -178,13 +178,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.DebugAgentConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_DebugConfig_To_v1beta2_DebugAgentConfig(a.(*DebugConfig), b.(*v1beta2.DebugAgentConfig), scope)
+	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.AdvancedAgentConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedAgentConfig(a.(*DebugConfig), b.(*v1beta2.AdvancedAgentConfig), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.DebugProcessorConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1alpha1_DebugConfig_To_v1beta2_DebugProcessorConfig(a.(*DebugConfig), b.(*v1beta2.DebugProcessorConfig), scope)
+	if err := s.AddConversionFunc((*DebugConfig)(nil), (*v1beta2.AdvancedProcessorConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedProcessorConfig(a.(*DebugConfig), b.(*v1beta2.AdvancedProcessorConfig), scope)
 	}); err != nil {
 		return err
 	}
@@ -243,13 +243,13 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*v1beta2.DebugAgentConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_DebugAgentConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.DebugAgentConfig), b.(*DebugConfig), scope)
+	if err := s.AddConversionFunc((*v1beta2.AdvancedAgentConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AdvancedAgentConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.AdvancedAgentConfig), b.(*DebugConfig), scope)
 	}); err != nil {
 		return err
 	}
-	if err := s.AddConversionFunc((*v1beta2.DebugProcessorConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_DebugProcessorConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.DebugProcessorConfig), b.(*DebugConfig), scope)
+	if err := s.AddConversionFunc((*v1beta2.AdvancedProcessorConfig)(nil), (*DebugConfig)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_AdvancedProcessorConfig_To_v1alpha1_DebugConfig(a.(*v1beta2.AdvancedProcessorConfig), b.(*DebugConfig), scope)
 	}); err != nil {
 		return err
 	}
@@ -550,7 +550,7 @@ func autoConvert_v1beta2_FlowCollectorConsolePlugin_To_v1alpha1_FlowCollectorCon
 		return err
 	}
 	out.QuickFilters = *(*[]QuickFilter)(unsafe.Pointer(&in.QuickFilters))
-	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -565,7 +565,7 @@ func autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *Flo
 	out.LogLevel = in.LogLevel
 	out.Privileged = in.Privileged
 	out.KafkaBatchSize = in.KafkaBatchSize
-	// WARNING: in.Debug requires manual conversion: inconvertible types (./api/v1alpha1.DebugConfig vs *github.com/netobserv/network-observability-operator/api/v1beta2.DebugAgentConfig)
+	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -580,7 +580,7 @@ func autoConvert_v1beta2_FlowCollectorEBPF_To_v1alpha1_FlowCollectorEBPF(in *v1b
 	out.LogLevel = in.LogLevel
 	out.Privileged = in.Privileged
 	out.KafkaBatchSize = in.KafkaBatchSize
-	// WARNING: in.Debug requires manual conversion: inconvertible types (*github.com/netobserv/network-observability-operator/api/v1beta2.DebugAgentConfig vs ./api/v1alpha1.DebugConfig)
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	// WARNING: in.Features requires manual conversion: does not exist in peer-type
 	return nil
 }
@@ -627,7 +627,7 @@ func autoConvert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowC
 	}
 	out.KafkaConsumerQueueCapacity = in.KafkaConsumerQueueCapacity
 	out.KafkaConsumerBatchSize = in.KafkaConsumerBatchSize
-	// WARNING: in.Debug requires manual conversion: inconvertible types (./api/v1alpha1.DebugConfig vs *github.com/netobserv/network-observability-operator/api/v1beta2.DebugProcessorConfig)
+	// WARNING: in.Debug requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -638,9 +638,6 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	}
 	out.LogLevel = in.LogLevel
 	out.Resources = in.Resources
-	// WARNING: in.LokiTimeout requires manual conversion: does not exist in peer-type
-	// WARNING: in.LokiBatchWait requires manual conversion: does not exist in peer-type
-	// WARNING: in.LokiBatchSize requires manual conversion: does not exist in peer-type
 	if err := v1.Convert_Pointer_int32_To_int32(&in.KafkaConsumerReplicas, &out.KafkaConsumerReplicas, s); err != nil {
 		return err
 	}
@@ -652,7 +649,7 @@ func autoConvert_v1beta2_FlowCollectorFLP_To_v1alpha1_FlowCollectorFLP(in *v1bet
 	// WARNING: in.LogTypes requires manual conversion: does not exist in peer-type
 	// WARNING: in.ClusterName requires manual conversion: does not exist in peer-type
 	// WARNING: in.MultiClusterDeployment requires manual conversion: does not exist in peer-type
-	// WARNING: in.Debug requires manual conversion: inconvertible types (*github.com/netobserv/network-observability-operator/api/v1beta2.DebugProcessorConfig vs ./api/v1alpha1.DebugConfig)
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -834,6 +831,10 @@ func autoConvert_v1beta2_FlowCollectorLoki_To_v1alpha1_FlowCollectorLoki(in *v1b
 	// WARNING: in.Microservices requires manual conversion: does not exist in peer-type
 	// WARNING: in.Monolithic requires manual conversion: does not exist in peer-type
 	// WARNING: in.LokiStack requires manual conversion: does not exist in peer-type
+	// WARNING: in.WriteTimeout requires manual conversion: does not exist in peer-type
+	// WARNING: in.WriteBatchWait requires manual conversion: does not exist in peer-type
+	// WARNING: in.WriteBatchSize requires manual conversion: does not exist in peer-type
+	// WARNING: in.Advanced requires manual conversion: does not exist in peer-type
 	return nil
 }
 

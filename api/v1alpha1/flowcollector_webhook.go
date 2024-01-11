@@ -53,14 +53,14 @@ func (r *FlowCollector) ConvertTo(dstRaw conversion.Hub) error {
 
 	// Processor
 	dst.Spec.Processor.LogTypes = restored.Spec.Processor.LogTypes
-	if restored.Spec.Processor.Debug.ConversationHeartbeatInterval != nil {
-		dst.Spec.Processor.Debug.ConversationHeartbeatInterval = restored.Spec.Processor.Debug.ConversationHeartbeatInterval
+	if restored.Spec.Processor.Advanced.ConversationHeartbeatInterval != nil {
+		dst.Spec.Processor.Advanced.ConversationHeartbeatInterval = restored.Spec.Processor.Advanced.ConversationHeartbeatInterval
 	}
-	if restored.Spec.Processor.Debug.ConversationEndTimeout != nil {
-		dst.Spec.Processor.Debug.ConversationEndTimeout = restored.Spec.Processor.Debug.ConversationEndTimeout
+	if restored.Spec.Processor.Advanced.ConversationEndTimeout != nil {
+		dst.Spec.Processor.Advanced.ConversationEndTimeout = restored.Spec.Processor.Advanced.ConversationEndTimeout
 	}
-	if restored.Spec.Processor.Debug.ConversationTerminatingTimeout != nil {
-		dst.Spec.Processor.Debug.ConversationTerminatingTimeout = restored.Spec.Processor.Debug.ConversationTerminatingTimeout
+	if restored.Spec.Processor.Advanced.ConversationTerminatingTimeout != nil {
+		dst.Spec.Processor.Advanced.ConversationTerminatingTimeout = restored.Spec.Processor.Advanced.ConversationTerminatingTimeout
 	}
 	if restored.Spec.Processor.Metrics.DisableAlerts != nil {
 		dst.Spec.Processor.Metrics.DisableAlerts = restored.Spec.Processor.Metrics.DisableAlerts
@@ -354,7 +354,7 @@ func Convert_v1alpha1_FlowCollectorFLP_To_v1beta2_FlowCollectorFLP(in *FlowColle
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugAgentConfig(in *DebugConfig, out *v1beta2.DebugAgentConfig, s apiconversion.Scope) error {
+func Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedAgentConfig(in *DebugConfig, out *v1beta2.AdvancedAgentConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
 }
@@ -362,7 +362,7 @@ func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugAgentConfig(in *DebugConfig, o
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_DebugAgentConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugAgentConfig, out *DebugConfig, s apiconversion.Scope) error {
+func Convert_v1beta2_AdvancedAgentConfig_To_v1alpha1_DebugConfig(in *v1beta2.AdvancedAgentConfig, out *DebugConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
 }
@@ -370,7 +370,7 @@ func Convert_v1beta2_DebugAgentConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugA
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugProcessorConfig(in *DebugConfig, out *v1beta2.DebugProcessorConfig, s apiconversion.Scope) error {
+func Convert_v1alpha1_DebugConfig_To_v1beta2_AdvancedProcessorConfig(in *DebugConfig, out *v1beta2.AdvancedProcessorConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
 }
@@ -378,7 +378,7 @@ func Convert_v1alpha1_DebugConfig_To_v1beta2_DebugProcessorConfig(in *DebugConfi
 // This function need to be manually created because conversion-gen not able to create it intentionally because
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
-func Convert_v1beta2_DebugProcessorConfig_To_v1alpha1_DebugConfig(in *v1beta2.DebugProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
+func Convert_v1beta2_AdvancedProcessorConfig_To_v1alpha1_DebugConfig(in *v1beta2.AdvancedProcessorConfig, out *DebugConfig, s apiconversion.Scope) error {
 	out.Env = in.Env
 	return nil
 }
@@ -387,7 +387,7 @@ func Convert_v1beta2_DebugProcessorConfig_To_v1alpha1_DebugConfig(in *v1beta2.De
 // we have new defined fields in v1beta2 not in v1alpha1
 // nolint:golint,stylecheck,revive
 func Convert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in *FlowCollectorEBPF, out *v1beta2.FlowCollectorEBPF, s apiconversion.Scope) error {
-	out.Debug = &v1beta2.DebugAgentConfig{
+	out.Advanced = &v1beta2.AdvancedAgentConfig{
 		Env: in.Debug.Env,
 	}
 	return autoConvert_v1alpha1_FlowCollectorEBPF_To_v1beta2_FlowCollectorEBPF(in, out, s)

@@ -143,7 +143,7 @@ func flowCollectorConsolePluginSpecs() {
 				if err := k8sClient.Get(ctx, crKey, &fc); err != nil {
 					return err
 				}
-				fc.Spec.ConsolePlugin.Debug = &flowslatest.DebugPluginConfig{
+				fc.Spec.ConsolePlugin.Advanced = &flowslatest.AdvancedPluginConfig{
 					Port: ptr.To(int32(9099)),
 				}
 				fc.Spec.ConsolePlugin.Replicas = ptr.To(int32(2))
@@ -237,7 +237,7 @@ func flowCollectorConsolePluginSpecs() {
 		It("Should be unregistered", func() {
 			By("Update CR to unregister")
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.ConsolePlugin.Debug.Register = ptr.To(false)
+				fc.Spec.ConsolePlugin.Advanced.Register = ptr.To(false)
 			})
 
 			By("Expecting the Console CR to not have plugin registered")

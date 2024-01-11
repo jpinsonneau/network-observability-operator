@@ -5168,6 +5168,24 @@ spec:
                     description: '`ebpf` describes the settings related to the eBPF-based
                       flow reporter when `spec.agent.type` is set to `eBPF`.'
                     properties:
+                      advanced:
+                        description: '`advanced` allows setting some aspects of the
+                          internal configuration of the eBPF agent. This section is
+                          aimed mostly for debugging and fine-grained performance
+                          optimizations, such as `GOGC` and `GOMAXPROCS` env vars.
+                          Users setting its values do it at their own risk.'
+                        properties:
+                          env:
+                            additionalProperties:
+                              type: string
+                            description: '`env` allows passing custom environment
+                              variables to underlying components. Useful for passing
+                              some very concrete performance-tuning options, such
+                              as `GOGC` and `GOMAXPROCS`, that should not be publicly
+                              exposed as part of the FlowCollector descriptor, as
+                              they are only useful in edge debug or support scenarios.'
+                            type: object
+                        type: object
                       cacheActiveTimeout:
                         default: 5s
                         description: '`cacheActiveTimeout` is the max period during
@@ -5189,24 +5207,6 @@ spec:
                         format: int32
                         minimum: 1
                         type: integer
-                      debug:
-                        description: '`debug` allows setting some aspects of the internal
-                          configuration of the eBPF agent. This section is aimed exclusively
-                          for debugging and fine-grained performance optimizations,
-                          such as `GOGC` and `GOMAXPROCS` env vars. Users setting
-                          its values do it at their own risk.'
-                        properties:
-                          env:
-                            additionalProperties:
-                              type: string
-                            description: '`env` allows passing custom environment
-                              variables to underlying components. Useful for passing
-                              some very concrete performance-tuning options, such
-                              as `GOGC` and `GOMAXPROCS`, that should not be publicly
-                              exposed as part of the FlowCollector descriptor, as
-                              they are only useful in edge debug or support scenarios.'
-                            type: object
-                        type: object
                       excludeInterfaces:
                         default:
                         - lo
@@ -5442,6 +5442,51 @@ spec:
                 description: '`consolePlugin` defines the settings related to the
                   OpenShift Console plugin, when available.'
                 properties:
+                  advanced:
+                    description: '`advanced` allows setting some aspects of the internal
+                      configuration of the console plugin. This section is aimed mostly
+                      for debugging and fine-grained performance optimizations, such
+                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
+                      do it at their own risk.'
+                    properties:
+                      args:
+                        description: '`args` allows passing custom arguments to underlying
+                          components. Useful for overriding some parameters, such
+                          as an url or a configuration path, that should not be publicly
+                          exposed as part of the FlowCollector descriptor, as they
+                          are only useful in edge debug or support scenarios.'
+                        items:
+                          type: string
+                        type: array
+                      env:
+                        additionalProperties:
+                          type: string
+                        description: '`env` allows passing custom environment variables
+                          to underlying components. Useful for passing some very concrete
+                          performance-tuning options, such as `GOGC` and `GOMAXPROCS`,
+                          that should not be publicly exposed as part of the FlowCollector
+                          descriptor, as they are only useful in edge debug or support
+                          scenarios.'
+                        type: object
+                      port:
+                        default: 9001
+                        description: '`port` is the plugin service port. Do not use
+                          9002, which is reserved for metrics.'
+                        format: int32
+                        maximum: 65535
+                        minimum: 1
+                        type: integer
+                      register:
+                        default: true
+                        description: '`register` allows, when set to `true`, to automatically
+                          register the provided console plugin with the OpenShift
+                          Console operator. When set to `false`, you can still register
+                          it manually by editing console.operator.openshift.io/cluster
+                          with the following command: `oc patch console.operator.openshift.io
+                          cluster --type=''json'' -p ''[{"op": "add", "path": "/spec/plugins/-",
+                          "value": "netobserv-plugin"}]''`'
+                        type: boolean
+                    type: object
                   autoscaler:
                     description: '`autoscaler` spec of a horizontal pod autoscaler
                       to set up for the plugin Deployment.'
@@ -5970,51 +6015,6 @@ spec:
                         - Disabled
                         - Enabled
                         type: string
-                    type: object
-                  debug:
-                    description: '`debug` allows setting some aspects of the internal
-                      configuration of the console plugin. This section is aimed exclusively
-                      for debugging and fine-grained performance optimizations, such
-                      as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
-                      do it at their own risk.'
-                    properties:
-                      args:
-                        description: '`args` allows passing custom arguments to underlying
-                          components. Useful for overriding some parameters, such
-                          as an url or a configuration path, that should not be publicly
-                          exposed as part of the FlowCollector descriptor, as they
-                          are only useful in edge debug or support scenarios.'
-                        items:
-                          type: string
-                        type: array
-                      env:
-                        additionalProperties:
-                          type: string
-                        description: '`env` allows passing custom environment variables
-                          to underlying components. Useful for passing some very concrete
-                          performance-tuning options, such as `GOGC` and `GOMAXPROCS`,
-                          that should not be publicly exposed as part of the FlowCollector
-                          descriptor, as they are only useful in edge debug or support
-                          scenarios.'
-                        type: object
-                      port:
-                        default: 9001
-                        description: '`port` is the plugin service port. Do not use
-                          9002, which is reserved for metrics.'
-                        format: int32
-                        maximum: 65535
-                        minimum: 1
-                        type: integer
-                      register:
-                        default: true
-                        description: '`register` allows, when set to `true`, to automatically
-                          register the provided console plugin with the OpenShift
-                          Console operator. When set to `false`, you can still register
-                          it manually by editing console.operator.openshift.io/cluster
-                          with the following command: `oc patch console.operator.openshift.io
-                          cluster --type=''json'' -p ''[{"op": "add", "path": "/spec/plugins/-",
-                          "value": "netobserv-plugin"}]''`'
-                        type: boolean
                     type: object
                   enable:
                     default: true
@@ -6569,6 +6569,37 @@ spec:
               loki:
                 description: '`loki`, the flow store, client settings.'
                 properties:
+                  advanced:
+                    description: '`advanced` allows setting some aspects of the internal
+                      configuration of the Loki clients. This section is aimed mostly
+                      for debugging and fine-grained performance optimizations.'
+                    properties:
+                      staticLabels:
+                        additionalProperties:
+                          type: string
+                        default:
+                          app: netobserv-flowcollector
+                        description: '`staticLabels` is a map of common labels to
+                          set on each flow in Loki storage.'
+                        type: object
+                      writeMaxBackoff:
+                        default: 5s
+                        description: '`writeMaxBackoff` is the maximum backoff time
+                          for Loki client connection between retries.'
+                        type: string
+                      writeMaxRetries:
+                        default: 2
+                        description: '`writeMaxRetries` is the maximum number of retries
+                          for Loki client connections.'
+                        format: int32
+                        minimum: 0
+                        type: integer
+                      writeMinBackoff:
+                        default: 1s
+                        description: '`writeMinBackoff` is the initial backoff time
+                          for Loki client connection between retries.'
+                        type: string
+                    type: object
                   enable:
                     default: true
                     description: Set `enable` to `true` to store flows in Loki. It
@@ -7023,6 +7054,23 @@ spec:
                           service that points to both the ingester and the querier.'
                         type: string
                     type: object
+                  writeBatchSize:
+                    default: 102400
+                    description: '`writeBatchSize` is the maximum batch size (in bytes)
+                      of Loki logs to accumulate before sending.'
+                    format: int64
+                    minimum: 1
+                    type: integer
+                  writeBatchWait:
+                    default: 1s
+                    description: '`writeBatchWait` is the maximum time to wait before
+                      sending a Loki batch.'
+                    type: string
+                  writeTimeout:
+                    default: 10s
+                    description: '`writeTimeout` is the maximum Loki time connection
+                      / request limit. A timeout of zero means no timeout.'
+                    type: string
                 type: object
               namespace:
                 default: netobserv
@@ -7034,15 +7082,9 @@ spec:
                   and forwards them to the Loki persistence layer and/or any available
                   exporter.'
                 properties:
-                  clusterName:
-                    default: ""
-                    description: '`clusterName` is the name of the cluster to appear
-                      in the flows data. This is useful in a multi-cluster context.
-                      When using OpenShift, leave empty to make it automatically determined.'
-                    type: string
-                  debug:
-                    description: '`debug` allows setting some aspects of the internal
-                      configuration of the flow processor. This section is aimed exclusively
+                  advanced:
+                    description: '`advanced` allows setting some aspects of the internal
+                      configuration of the flow processor. This section is aimed mostly
                       for debugging and fine-grained performance optimizations, such
                       as `GOGC` and `GOMAXPROCS` env vars. Users setting its values
                       do it at their own risk.'
@@ -7094,31 +7136,6 @@ spec:
                         maximum: 65535
                         minimum: 1
                         type: integer
-                      lokiMaxBackoff:
-                        default: 5s
-                        description: '`lokiMaxBackoff` is the maximum backoff time
-                          for loki client connection between retries.'
-                        type: string
-                      lokiMaxRetries:
-                        default: 2
-                        description: '`lokiMaxRetries` is the maximum number of retries
-                          for loki client connections.'
-                        format: int32
-                        minimum: 0
-                        type: integer
-                      lokiMinBackoff:
-                        default: 1s
-                        description: '`lokiMinBackoff` is the initial backoff time
-                          for loki client connection between retries.'
-                        type: string
-                      lokiStaticLabels:
-                        additionalProperties:
-                          type: string
-                        default:
-                          app: netobserv-flowcollector
-                        description: '`lokiStaticLabels` is a map of common labels
-                          to set on each flow in loki storage.'
-                        type: object
                       port:
                         default: 2055
                         description: Port of the flow collector (host port). By convention,
@@ -7137,6 +7154,12 @@ spec:
                         minimum: 0
                         type: integer
                     type: object
+                  clusterName:
+                    default: ""
+                    description: '`clusterName` is the name of the cluster to appear
+                      in the flows data. This is useful in a multi-cluster context.
+                      When using OpenShift, leave empty to make it automatically determined.'
+                    type: string
                   imagePullPolicy:
                     default: IfNotPresent
                     description: '`imagePullPolicy` is the Kubernetes pull policy
@@ -7723,23 +7746,6 @@ spec:
                     - Conversations
                     - EndedConversations
                     - All
-                    type: string
-                  lokiBatchSize:
-                    default: 102400
-                    description: '`lokiBatchSize` is the maximum batch size (in bytes)
-                      of loki logs to accumulate before sending.'
-                    format: int64
-                    minimum: 1
-                    type: integer
-                  lokiBatchWait:
-                    default: 1s
-                    description: '`lokiBatchWait` is the maximum time to wait before
-                      sending a loki batch.'
-                    type: string
-                  lokiTimeout:
-                    default: 10s
-                    description: '`lokiTimeout` is the maximum loki time connection
-                      / request limit. A timeout of zero means no timeout.'
                     type: string
                   metrics:
                     description: '`Metrics` define the processor configuration regarding

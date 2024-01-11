@@ -79,24 +79,24 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 	})
 
 	// loki stage (write) configuration
-	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
+	debugConfig := helper.GetAdvancedLokiConfig(b.desired.Loki.Advanced)
 	if helper.UseLoki(b.desired) {
 		lokiWrite := api.WriteLoki{
 			Labels:         indexFields,
-			BatchSize:      int(b.desired.Processor.LokiBatchSize),
-			BatchWait:      helper.UnstructuredDuration(b.desired.Processor.LokiBatchWait),
-			MaxBackoff:     helper.UnstructuredDuration(debugConfig.LokiMaxBackoff),
-			MaxRetries:     int(helper.PtrInt32(debugConfig.LokiMaxRetries)),
-			MinBackoff:     helper.UnstructuredDuration(debugConfig.LokiMinBackoff),
+			BatchSize:      int(b.desired.Loki.WriteBatchSize),
+			BatchWait:      helper.UnstructuredDuration(b.desired.Loki.WriteBatchWait),
+			MaxBackoff:     helper.UnstructuredDuration(debugConfig.WriteMaxBackoff),
+			MaxRetries:     int(helper.PtrInt32(debugConfig.WriteMaxRetries)),
+			MinBackoff:     helper.UnstructuredDuration(debugConfig.WriteMinBackoff),
 			StaticLabels:   model.LabelSet{},
-			Timeout:        helper.UnstructuredDuration(b.desired.Processor.LokiTimeout),
+			Timeout:        helper.UnstructuredDuration(b.desired.Loki.WriteTimeout),
 			URL:            b.loki.IngesterURL,
 			TimestampLabel: "TimeFlowEndMs",
 			TimestampScale: "1ms",
 			TenantID:       b.loki.TenantID,
 		}
 
-		for k, v := range *debugConfig.LokiStaticLabels {
+		for k, v := range *debugConfig.StaticLabels {
 			lokiWrite.StaticLabels[model.LabelName(k)] = model.LabelValue(v)
 		}
 
@@ -265,7 +265,7 @@ func (b *PipelineBuilder) addConnectionTracking(indexFields []string, lastStage 
 	if b.desired.Processor.LogTypes != nil && *b.desired.Processor.LogTypes != flowslatest.LogTypeFlows {
 		indexFields = append(indexFields, constants.LokiConnectionIndexFields...)
 		outputRecordTypes := helper.GetRecordTypes(&b.desired.Processor)
-		debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
+		debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 		lastStage = lastStage.ConnTrack("extract_conntrack", api.ConnTrack{
 			KeyDefinition: api.KeyDefinition{
 				FieldGroups: []api.FieldGroup{
@@ -324,7 +324,7 @@ func (b *PipelineBuilder) addTransformFilter(lastStage config.PipelineBuilderSta
 	}
 
 	// Filter-out unused fields?
-	if *helper.GetDebugProcessorConfig(b.desired.Processor.Debug).DropUnusedFields {
+	if *helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).DropUnusedFields {
 		if helper.UseIPFIX(b.desired) {
 			rules := filters.GetOVSGoflowUnusedRules()
 			transformFilterRules = append(transformFilterRules, rules...)

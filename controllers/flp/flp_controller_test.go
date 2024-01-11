@@ -89,7 +89,7 @@ func ControllerSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: &flowslatest.DebugProcessorConfig{
+						Advanced: &flowslatest.AdvancedProcessorConfig{
 							Env: map[string]string{
 								"GOGC": "200",
 							},
@@ -179,7 +179,7 @@ func ControllerSpecs() {
 				fc.Spec.Processor = flowslatest.FlowCollectorFLP{
 					ImagePullPolicy: "Never",
 					LogLevel:        "error",
-					Debug: &flowslatest.DebugProcessorConfig{
+					Advanced: &flowslatest.AdvancedProcessorConfig{
 						Env: map[string]string{
 							// we'll test that env vars are sorted, to keep idempotency
 							"GOMAXPROCS": "33",
@@ -253,7 +253,9 @@ func ControllerSpecs() {
 
 		It("Should redeploy if the spec doesn't change but the external flowlogs-pipeline-config does", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Debug.LokiMaxRetries = ptr.To(int32(7))
+				fc.Spec.Loki.Advanced = &flowslatest.AdvancedLokiConfig{
+					WriteMaxRetries: ptr.To(int32(7)),
+				}
 			})
 
 			By("Expecting that the flowlogsPipeline.PodConfigurationDigest attribute has changed")
@@ -728,7 +730,7 @@ func ControllerSpecs() {
 	Context("Changing namespace", func() {
 		It("Should update namespace successfully", func() {
 			updateCR(crKey, func(fc *flowslatest.FlowCollector) {
-				fc.Spec.Processor.Debug.Port = ptr.To(int32(9999))
+				fc.Spec.Processor.Advanced.Port = ptr.To(int32(9999))
 				fc.Spec.Namespace = otherNamespace
 			})
 		})

@@ -3,7 +3,6 @@ package helper
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 
@@ -16,11 +15,12 @@ import (
 )
 
 var (
-	crd                *apiextensionsv1.CustomResourceDefinition
-	quoteRegex         = regexp.MustCompile(`^"(.*)"$`)
-	AgentDebugPath     = []string{"spec", "agent", "debug"}
-	ProcessorDebugPath = []string{"spec", "processor", "debug"}
-	PluginDebugPath    = []string{"spec", "consolePlugin", "debug"}
+	crd                   *apiextensionsv1.CustomResourceDefinition
+	quoteRegex            = regexp.MustCompile(`^"(.*)"$`)
+	AgentAdvancedPath     = []string{"spec", "agent", "advanced"}
+	ProcessorAdvancedPath = []string{"spec", "processor", "advanced"}
+	PluginAdvancedPath    = []string{"spec", "consolePlugin", "advanced"}
+	LokiAdvancedPath      = []string{"spec", "loki", "advanced"}
 )
 
 func ParseCRD(bytes []byte) error {
@@ -48,28 +48,28 @@ func SetCRD(v *apiextensionsv1.CustomResourceDefinition) {
 	crd = v
 }
 
-func GetDebugDurationValue(path []string, field string, value *v1.Duration) *v1.Duration {
+func GetAdvancedDurationValue(path []string, field string, value *v1.Duration) *v1.Duration {
 	if value != nil && !IsDefaultValue(path, field, value.Duration.String()) {
 		return value
 	}
 	return nil
 }
 
-func GetDebugBoolValue(path []string, field string, value *bool) *bool {
+func GetAdvancedBoolValue(path []string, field string, value *bool) *bool {
 	if value != nil && !IsDefaultValue(path, field, *value) {
 		return value
 	}
 	return nil
 }
 
-func GetDebugInt32Value(path []string, field string, value *int32) *int32 {
+func GetAdvancedInt32Value(path []string, field string, value *int32) *int32 {
 	if value != nil && !IsDefaultValue(path, field, *value) {
 		return value
 	}
 	return nil
 }
 
-func GetDebugMapValue(path []string, field string, value *map[string]string) *map[string]string {
+func GetAdvancedMapValue(path []string, field string, value *map[string]string) *map[string]string {
 	bytes, _ := json.Marshal(value)
 	if !IsDefaultValue(path, field, string(bytes)) {
 		return value
@@ -153,7 +153,6 @@ func GetValueOrDefaultMapString(path []string, field string, value *map[string]s
 func getPathProperties(path []string) map[string]apiextensionsv1.JSONSchemaProps {
 	schema := getSchema()
 	if schema == nil {
-		log.Print("getPathProperties schema is nill")
 		return map[string]apiextensionsv1.JSONSchemaProps{}
 	}
 	properties := schema.Properties
@@ -167,7 +166,6 @@ func getPathProperties(path []string) map[string]apiextensionsv1.JSONSchemaProps
 
 func getSchema() *apiextensionsv1.JSONSchemaProps {
 	if crd == nil {
-		log.Print("getSchema crd is nill")
 		return nil
 	}
 	versions := crd.Spec.Versions
@@ -175,6 +173,5 @@ func getSchema() *apiextensionsv1.JSONSchemaProps {
 		lastVersion := versions[len(versions)-1]
 		return lastVersion.Schema.OpenAPIV3Schema
 	}
-	log.Print("getSchema versions is empty")
 	return nil
 }

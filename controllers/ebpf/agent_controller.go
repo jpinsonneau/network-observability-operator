@@ -322,7 +322,7 @@ func (c *AgentController) envConfig(ctx context.Context, coll *flowslatest.FlowC
 		}
 	} else {
 		config = append(config, corev1.EnvVar{Name: envExport, Value: exportGRPC})
-		debugConfig := helper.GetDebugProcessorConfig(coll.Spec.Processor.Debug)
+		debugConfig := helper.GetAdvancedProcessorConfig(coll.Spec.Processor.Advanced)
 		// When flowlogs-pipeline is deployed as a daemonset, each agent must send
 		// data to the pod that is deployed in the same host
 		config = append(config, corev1.EnvVar{
@@ -463,7 +463,7 @@ func (c *AgentController) setEnvConfig(coll *flowslatest.FlowCollector) []corev1
 	dedupJustMark := dedupeJustMarkDefault
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	debugConfig := helper.GetDebugAgentConfig(coll.Spec.Agent.EBPF.Debug)
+	debugConfig := helper.GetAdvancedAgentConfig(coll.Spec.Agent.EBPF.Advanced)
 	for _, pair := range helper.KeySorted(debugConfig.Env) {
 		k, v := pair[0], pair[1]
 		if k == envDedupe {

@@ -58,7 +58,7 @@ func flowCollectorEBPFSpecs() {
 					Processor: flowslatest.FlowCollectorFLP{
 						ImagePullPolicy: "Never",
 						LogLevel:        "error",
-						Debug: &flowslatest.DebugProcessorConfig{
+						Advanced: &flowslatest.AdvancedProcessorConfig{
 							Port: ptr.To(int32(9999)),
 						},
 					},
@@ -71,7 +71,7 @@ func flowCollectorEBPFSpecs() {
 							Interfaces:         []string{"veth0", "/^br-/"},
 							ExcludeInterfaces:  []string{"br-3", "lo"},
 							LogLevel:           "trace",
-							Debug: &flowslatest.DebugAgentConfig{
+							Advanced: &flowslatest.AdvancedAgentConfig{
 								Env: map[string]string{"GOGC": "400", "BUFFERS_LENGTH": "100"},
 							},
 						},

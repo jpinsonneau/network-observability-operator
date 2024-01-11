@@ -114,14 +114,14 @@ func (b *builder) Pipeline() *PipelineBuilder { return b.pipeline }
 
 func (b *builder) NewIPFIXPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewCollectorPipeline("ipfix", api.IngestCollector{
-		Port:     int(*helper.GetDebugProcessorConfig(b.desired.Processor.Debug).Port),
+		Port:     int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
 		HostName: "0.0.0.0",
 	}))
 }
 
 func (b *builder) NewGRPCPipeline() PipelineBuilder {
 	return b.initPipeline(config.NewGRPCPipeline("grpc", api.IngestGRPCProto{
-		Port: int(*helper.GetDebugProcessorConfig(b.desired.Processor.Debug).Port),
+		Port: int(*helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced).Port),
 	}))
 }
 
@@ -156,7 +156,7 @@ func (b *builder) portProtocol() corev1.Protocol {
 }
 
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
-	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
+	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if hasHostPort {
@@ -205,7 +205,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}})
 
 	var envs []corev1.EnvVar
-	debugConfig = helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
+	debugConfig = helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
 	for _, pair := range helper.KeySorted(debugConfig.Env) {
@@ -308,7 +308,7 @@ func (b *builder) GetJSONConfig() (string, error) {
 			}
 		}
 	}
-	debugConfig := helper.GetDebugProcessorConfig(b.desired.Processor.Debug)
+	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	config := map[string]interface{}{
 		"log-level": b.desired.Processor.LogLevel,
 		"health": map[string]interface{}{

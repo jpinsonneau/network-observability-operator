@@ -65,12 +65,9 @@ func flowCollectorIsoSpecs() {
 				KafkaConsumerAutoscaler:    flowslatest.FlowCollectorHPA{Status: "Disabled", MinReplicas: &zero, MaxReplicas: zero, Metrics: []ascv2.MetricSpec{}},
 				KafkaConsumerQueueCapacity: int(zero),
 				KafkaConsumerBatchSize:     int(zero),
-				LokiTimeout:                &metav1.Duration{Duration: time.Second},
-				LokiBatchWait:              &metav1.Duration{Duration: time.Second},
-				LokiBatchSize:              100,
 				MultiClusterDeployment:     ptr.To(true),
 				ClusterName:                "testCluster",
-				Debug: &flowslatest.DebugProcessorConfig{
+				Advanced: &flowslatest.AdvancedProcessorConfig{
 					Port:                           ptr.To(int32(12345)),
 					HealthPort:                     ptr.To(int32(12346)),
 					ProfilePort:                    ptr.To(int32(12347)),
@@ -79,10 +76,6 @@ func flowCollectorIsoSpecs() {
 					ConversationTerminatingTimeout: &metav1.Duration{Duration: time.Second},
 					EnableKubeProbes:               ptr.To(false),
 					DropUnusedFields:               ptr.To(false),
-					LokiMinBackoff:                 &metav1.Duration{Duration: time.Second},
-					LokiMaxBackoff:                 &metav1.Duration{Duration: time.Second},
-					LokiMaxRetries:                 &zero,
-					LokiStaticLabels:               &map[string]string{},
 				},
 				LogTypes: &outputRecordTypes,
 				Metrics: flowslatest.FLPMetrics{
@@ -117,7 +110,7 @@ func flowCollectorIsoSpecs() {
 					CacheActiveTimeout: "5s",
 					CacheMaxFlows:      100,
 					ImagePullPolicy:    "Always",
-					Debug:              &flowslatest.DebugAgentConfig{},
+					Advanced:           &flowslatest.AdvancedAgentConfig{},
 					LogLevel:           "trace",
 					Resources:          v1.ResourceRequirements{Limits: nil, Requests: nil},
 					Interfaces:         []string{},
@@ -131,7 +124,7 @@ func flowCollectorIsoSpecs() {
 				Enable:          ptr.To(true),
 				Replicas:        &zero,
 				ImagePullPolicy: "Always",
-				Debug: &flowslatest.DebugPluginConfig{
+				Advanced: &flowslatest.AdvancedPluginConfig{
 					Register: ptr.To(false),
 					Port:     ptr.To(int32(12345)),
 				},
@@ -170,6 +163,15 @@ func flowCollectorIsoSpecs() {
 				LokiStack: flowslatest.LokiStackRef{
 					Name:      "loki",
 					Namespace: "",
+				},
+				WriteTimeout:   &metav1.Duration{Duration: time.Second},
+				WriteBatchWait: &metav1.Duration{Duration: time.Second},
+				WriteBatchSize: 100,
+				Advanced: &flowslatest.AdvancedLokiConfig{
+					WriteMinBackoff: &metav1.Duration{Duration: time.Second},
+					WriteMaxBackoff: &metav1.Duration{Duration: time.Second},
+					WriteMaxRetries: &zero,
+					StaticLabels:    &map[string]string{},
 				},
 			},
 			Kafka: flowslatest.FlowCollectorKafka{

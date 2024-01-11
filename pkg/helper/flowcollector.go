@@ -172,8 +172,8 @@ func GetNamespace(spec *flowslatest.FlowCollectorSpec) string {
 	return constants.DefaultOperatorNamespace
 }
 
-func GetDebugAgentConfig(specConfig *flowslatest.DebugAgentConfig) flowslatest.DebugAgentConfig {
-	debugConfig := flowslatest.DebugAgentConfig{
+func GetAdvancedAgentConfig(specConfig *flowslatest.AdvancedAgentConfig) flowslatest.AdvancedAgentConfig {
+	debugConfig := flowslatest.AdvancedAgentConfig{
 		Env: map[string]string{},
 	}
 
@@ -186,21 +186,17 @@ func GetDebugAgentConfig(specConfig *flowslatest.DebugAgentConfig) flowslatest.D
 	return debugConfig
 }
 
-func GetDebugProcessorConfig(specConfig *flowslatest.DebugProcessorConfig) flowslatest.DebugProcessorConfig {
-	debugConfig := flowslatest.DebugProcessorConfig{
+func GetAdvancedProcessorConfig(specConfig *flowslatest.AdvancedProcessorConfig) flowslatest.AdvancedProcessorConfig {
+	debugConfig := flowslatest.AdvancedProcessorConfig{
 		Env:                            map[string]string{},
-		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "port")),
-		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "healthPort")),
-		ProfilePort:                    ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "profilePort")),
-		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorDebugPath, "enableKubeProbes")),
-		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorDebugPath, "dropUnusedFields")),
-		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationHeartbeatInterval")),
-		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationEndTimeout")),
-		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "conversationTerminatingTimeout")),
-		LokiMinBackoff:                 ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "lokiMinBackoff")),
-		LokiMaxBackoff:                 ptr.To(GetFieldDefaultDuration(ProcessorDebugPath, "lokiMaxBackoff")),
-		LokiMaxRetries:                 ptr.To(GetFieldDefaultInt32(ProcessorDebugPath, "lokiMaxRetries")),
-		LokiStaticLabels:               ptr.To(GetFieldDefaultMapString(ProcessorDebugPath, "lokiStaticLabels")),
+		Port:                           ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "port")),
+		HealthPort:                     ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "healthPort")),
+		ProfilePort:                    ptr.To(GetFieldDefaultInt32(ProcessorAdvancedPath, "profilePort")),
+		EnableKubeProbes:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "enableKubeProbes")),
+		DropUnusedFields:               ptr.To(GetFieldDefaultBool(ProcessorAdvancedPath, "dropUnusedFields")),
+		ConversationHeartbeatInterval:  ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationHeartbeatInterval")),
+		ConversationEndTimeout:         ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationEndTimeout")),
+		ConversationTerminatingTimeout: ptr.To(GetFieldDefaultDuration(ProcessorAdvancedPath, "conversationTerminatingTimeout")),
 	}
 
 	if specConfig != nil {
@@ -231,29 +227,43 @@ func GetDebugProcessorConfig(specConfig *flowslatest.DebugProcessorConfig) flows
 		if specConfig.ConversationTerminatingTimeout != nil {
 			debugConfig.ConversationTerminatingTimeout = specConfig.ConversationTerminatingTimeout
 		}
-		if specConfig.LokiMinBackoff != nil {
-			debugConfig.LokiMinBackoff = specConfig.LokiMinBackoff
+	}
+
+	return debugConfig
+}
+
+func GetAdvancedLokiConfig(specConfig *flowslatest.AdvancedLokiConfig) flowslatest.AdvancedLokiConfig {
+	debugConfig := flowslatest.AdvancedLokiConfig{
+		WriteMinBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMinBackoff")),
+		WriteMaxBackoff: ptr.To(GetFieldDefaultDuration(LokiAdvancedPath, "writeMaxBackoff")),
+		WriteMaxRetries: ptr.To(GetFieldDefaultInt32(LokiAdvancedPath, "writeMaxRetries")),
+		StaticLabels:    ptr.To(GetFieldDefaultMapString(LokiAdvancedPath, "staticLabels")),
+	}
+
+	if specConfig != nil {
+		if specConfig.WriteMinBackoff != nil {
+			debugConfig.WriteMinBackoff = specConfig.WriteMinBackoff
 		}
-		if specConfig.LokiMaxBackoff != nil {
-			debugConfig.LokiMaxBackoff = specConfig.LokiMaxBackoff
+		if specConfig.WriteMaxBackoff != nil {
+			debugConfig.WriteMaxBackoff = specConfig.WriteMaxBackoff
 		}
-		if specConfig.LokiMaxRetries != nil {
-			debugConfig.LokiMaxRetries = specConfig.LokiMaxRetries
+		if specConfig.WriteMaxRetries != nil {
+			debugConfig.WriteMaxRetries = specConfig.WriteMaxRetries
 		}
-		if specConfig.LokiStaticLabels != nil {
-			debugConfig.LokiStaticLabels = specConfig.LokiStaticLabels
+		if specConfig.StaticLabels != nil {
+			debugConfig.StaticLabels = specConfig.StaticLabels
 		}
 	}
 
 	return debugConfig
 }
 
-func GetDebugPluginConfig(specConfig *flowslatest.DebugPluginConfig) flowslatest.DebugPluginConfig {
-	debugConfig := flowslatest.DebugPluginConfig{
+func GetAdvancedPluginConfig(specConfig *flowslatest.AdvancedPluginConfig) flowslatest.AdvancedPluginConfig {
+	debugConfig := flowslatest.AdvancedPluginConfig{
 		Env:      map[string]string{},
 		Args:     []string{},
-		Register: ptr.To(GetFieldDefaultBool(PluginDebugPath, "register")),
-		Port:     ptr.To(GetFieldDefaultInt32(PluginDebugPath, "port")),
+		Register: ptr.To(GetFieldDefaultBool(PluginAdvancedPath, "register")),
+		Port:     ptr.To(GetFieldDefaultInt32(PluginAdvancedPath, "port")),
 	}
 
 	if specConfig != nil {
