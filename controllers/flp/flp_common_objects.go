@@ -159,14 +159,14 @@ func (b *builder) portProtocol() corev1.Protocol {
 }
 
 func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[string]string) corev1.PodTemplateSpec {
-	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	var ports []corev1.ContainerPort
 	var tolerations []corev1.Toleration
 	if hasHostPort {
 		ports = []corev1.ContainerPort{{
 			Name:          constants.FLPPortName,
-			HostPort:      *debugConfig.Port,
-			ContainerPort: *debugConfig.Port,
+			HostPort:      *advancedConfig.Port,
+			ContainerPort: *advancedConfig.Port,
 			Protocol:      b.portProtocol(),
 		}}
 		// This allows deploying an instance in the master node, the same technique used in the
@@ -176,7 +176,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 
 	ports = append(ports, corev1.ContainerPort{
 		Name:          healthServiceName,
-		ContainerPort: *debugConfig.HealthPort,
+		ContainerPort: *advancedConfig.HealthPort,
 	})
 
 	ports = append(ports, corev1.ContainerPort{
@@ -184,10 +184,10 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		ContainerPort: b.desired.Processor.Metrics.Server.Port,
 	})
 
-	if debugConfig.ProfilePort != nil {
+	if advancedConfig.ProfilePort != nil {
 		ports = append(ports, corev1.ContainerPort{
 			Name:          profilePortName,
-			ContainerPort: *debugConfig.ProfilePort,
+			ContainerPort: *advancedConfig.ProfilePort,
 			Protocol:      corev1.ProtocolTCP,
 		})
 	}
@@ -208,10 +208,10 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 	}})
 
 	var envs []corev1.EnvVar
-	debugConfig = helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+	advancedConfig = helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	// we need to sort env map to keep idempotency,
 	// as equal maps could be iterated in different order
-	for _, pair := range helper.KeySorted(debugConfig.Env) {
+	for _, pair := range helper.KeySorted(advancedConfig.Env) {
 		envs = append(envs, corev1.EnvVar{Name: pair[0], Value: pair[1]})
 	}
 	envs = append(envs, constants.EnvNoHTTP2)
@@ -227,7 +227,7 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 		Env:             envs,
 		SecurityContext: helper.ContainerDefaultSecurityContext(),
 	}
-	if *debugConfig.EnableKubeProbes {
+	if *advancedConfig.EnableKubeProbes {
 		container.LivenessProbe = &corev1.Probe{
 			ProbeHandler: corev1.ProbeHandler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -269,6 +269,9 @@ func (b *builder) podTemplate(hasHostPort, hostNetwork bool, annotations map[str
 			ServiceAccountName: b.name(),
 			HostNetwork:        hostNetwork,
 			DNSPolicy:          dnsPolicy,
+			NodeSelector:       advancedConfig.NodeSelector,
+			Affinity:           advancedConfig.Affinity,
+			PriorityClassName:  advancedConfig.PriorityClassName,
 		},
 	}
 }
@@ -314,19 +317,19 @@ func (b *builder) GetJSONConfig() (string, error) {
 			}
 		}
 	}
-	debugConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
+	advancedConfig := helper.GetAdvancedProcessorConfig(b.desired.Processor.Advanced)
 	config := map[string]interface{}{
 		"log-level": b.desired.Processor.LogLevel,
 		"health": map[string]interface{}{
-			"port": *debugConfig.HealthPort,
+			"port": *advancedConfig.HealthPort,
 		},
 		"pipeline":        b.pipeline.GetStages(),
 		"parameters":      b.pipeline.GetStageParams(),
 		"metricsSettings": metricsSettings,
 	}
-	if debugConfig.ProfilePort != nil {
+	if advancedConfig.ProfilePort != nil {
 		config["profile"] = map[string]interface{}{
-			"port": *debugConfig.ProfilePort,
+			"port": *advancedConfig.ProfilePort,
 		}
 	}
 
