@@ -87,8 +87,7 @@ func (b *PipelineBuilder) AddProcessorStages() error {
 			ReporterIPField:    "AgentIP",
 			SrcHostField:       "SrcK8S_HostIP",
 			DstHostField:       "DstK8S_HostIP",
-			FlowDirectionField: "FlowDirection",
-			IfDirectionField:   "IfDirection",
+			FlowDirectionField: "NodeDirection",
 		},
 	})
 
@@ -194,9 +193,9 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "1|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "NodeDirection", Value: "1|2", Type: "regex"})
 	} else if flowMetric.Direction == metricslatest.Ingress {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "FlowDirection", Value: "0|2", Type: "regex"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "NodeDirection", Value: "0|2", Type: "regex"})
 	}
 	for _, b := range flowMetric.Buckets {
 		f, err := strconv.ParseFloat(b, 64)
@@ -243,7 +242,7 @@ func (b *PipelineBuilder) addConnectionTracking(lastStage config.PipelineBuilder
 			ReportMissing: true,
 		},
 		{
-			Name:          "FlowDirection",
+			Name:          "NodeDirection",
 			Operation:     "first",
 			ReportMissing: true,
 		},

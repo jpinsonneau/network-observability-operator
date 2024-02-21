@@ -22,7 +22,7 @@ import (
 
 type MetricType string
 type FilterMatchType string
-type FlowDirection string
+type NodeDirection string
 
 const (
 	CounterMetric   MetricType = "Counter"
@@ -33,9 +33,9 @@ const (
 	MatchRegex    FilterMatchType = "Regex"
 	MatchPresence FilterMatchType = "Presence"
 	MatchAbsence  FilterMatchType = "Absence"
-	Egress        FlowDirection   = "Egress"
-	Ingress       FlowDirection   = "Ingress"
-	AnyDirection  FlowDirection   = "Any"
+	Egress        NodeDirection   = "Egress"
+	Ingress       NodeDirection   = "Ingress"
+	AnyDirection  NodeDirection   = "Any"
 )
 
 type MetricFilter struct {
@@ -77,7 +77,7 @@ type FlowMetricSpec struct {
 	ValueField string `json:"valueField,omitempty"`
 
 	// `filters` is a list of fields and values used to restrict which flows are taken into account. Oftentimes, these filters must
-	// be used to eliminate duplicates: `Duplicate:"false"` and `FlowDirection: "0"`.
+	// be used to eliminate duplicates: `Duplicate:"false"` and `NodeDirection: "0"`.
 	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.
 	// +optional
 	Filters []MetricFilter `json:"filters"`
@@ -97,12 +97,12 @@ type FlowMetricSpec struct {
 	IncludeDuplicates bool `json:"includeDuplicates,omitempty"`
 
 	// Filter for ingress, egress or any direction flows.
-	// When set to `Ingress`, it is equivalent to adding the regex filter on `FlowDirection`: `0|2`.
-	// When set to `Egress`, it is equivalent to adding the regex filter on `FlowDirection`: `1|2`.
+	// When set to `Ingress`, it is equivalent to adding the regex filter on `NodeDirection`: `0|2`.
+	// When set to `Egress`, it is equivalent to adding the regex filter on `NodeDirection`: `1|2`.
 	// +kubebuilder:validation:Enum:="Any";"Egress";"Ingress"
 	// +kubebuilder:default:="Any"
 	// +optional
-	Direction FlowDirection `json:"direction,omitempty"`
+	Direction NodeDirection `json:"direction,omitempty"`
 
 	// A list of buckets to use when `type` is "Histogram". The list must be parseable as floats. Prometheus default buckets will be used if unset.
 	// +optional

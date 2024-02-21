@@ -70,7 +70,7 @@ func init() {
 						ValueKey: valueField,
 						Filters: []flpapi.MetricsFilter{
 							{Key: "Duplicate", Value: "false"},
-							{Key: "FlowDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
+							{Key: "NodeDirection", Value: mapDirection[dir], Type: flpapi.PromFilterRegex},
 						},
 						Labels: labels,
 					},

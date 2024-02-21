@@ -116,7 +116,7 @@ The "Loki label" column is useful when querying Loki directly: label fields need
 - RST+ACK (0x400)
 | n/a
 | no
-| `FlowDirection`
+| `NodeDirection`
 | number
 | Flow direction from the node observation point. Can be one of: +
 - 0: Ingress (incoming traffic, from the node observation point) +

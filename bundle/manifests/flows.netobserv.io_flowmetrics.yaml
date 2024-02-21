@@ -51,8 +51,8 @@ spec:
                 default: Any
                 description: 'Filter for ingress, egress or any direction flows. When
                   set to `Ingress`, it is equivalent to adding the regex filter on
-                  `FlowDirection`: `0|2`. When set to `Egress`, it is equivalent to
-                  adding the regex filter on `FlowDirection`: `1|2`.'
+                  `NodeDirection`: `0|2`. When set to `Egress`, it is equivalent to
+                  adding the regex filter on `NodeDirection`: `1|2`.'
                 enum:
                 - Any
                 - Egress
@@ -61,7 +61,7 @@ spec:
               filters:
                 description: '`filters` is a list of fields and values used to restrict
                   which flows are taken into account. Oftentimes, these filters must
-                  be used to eliminate duplicates: `Duplicate:"false"` and `FlowDirection:
+                  be used to eliminate duplicates: `Duplicate:"false"` and `NodeDirection:
                   "0"`. Refer to the documentation for the list of available fields:
                   https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.'
                 items:

@@ -29,7 +29,7 @@ metadata:
                 "value": "false"
               },
               {
-                "field": "FlowDirection",
+                "field": "NodeDirection",
                 "matchType": "Regex",
                 "value": "1|2"
               }

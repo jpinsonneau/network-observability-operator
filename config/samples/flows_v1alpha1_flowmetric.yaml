@@ -20,6 +20,6 @@ spec:
     matchType: Regex
   - field: Duplicate
     value: "false"
-  - field: FlowDirection
+  - field: NodeDirection
     value: "1|2"
     matchType: Regex

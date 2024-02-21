@@ -656,6 +656,7 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiManual(t *testing.T) {
 		"DstK8S_OwnerName",
 		"DstK8S_Type",
 		"K8S_FlowLayer",
+		"NodeDirection",
 		"_RecordType",
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
@@ -711,8 +712,8 @@ func TestConfigMapShouldDeserializeAsJSONWithLokiStack(t *testing.T) {
 		"DstK8S_OwnerName",
 		"DstK8S_Type",
 		"K8S_FlowLayer",
+		"NodeDirection",
 		"_RecordType",
-		"FlowDirection",
 	}, lokiCfg.Labels)
 	assert.Equal(`{app="netobserv-flowcollector"}`, fmt.Sprintf("%v", lokiCfg.StaticLabels))
 
