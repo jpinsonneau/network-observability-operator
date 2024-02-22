@@ -190,7 +190,7 @@ func flowMetricToFLP(flowMetric *metricslatest.FlowMetricSpec) (*api.MetricsItem
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: f.Field, Value: f.Value, Type: strings.ToLower(string(f.MatchType))})
 	}
 	if !flowMetric.IncludeDuplicates {
-		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "false", Type: "exact"})
+		m.Filters = append(m.Filters, api.MetricsFilter{Key: "Duplicate", Value: "true", Type: "different"})
 	}
 	if flowMetric.Direction == metricslatest.Egress {
 		m.Filters = append(m.Filters, api.MetricsFilter{Key: "NodeDirection", Value: "1|2", Type: "regex"})

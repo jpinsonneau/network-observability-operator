@@ -93,7 +93,7 @@ func TestFlowMetricToFLP(t *testing.T) {
 		Filter: api.MetricsFilter{Key: "", Value: "", Type: ""},
 		Filters: []api.MetricsFilter{
 			{Key: "f", Value: "v", Type: api.PromFilterExact},
-			{Key: "Duplicate", Value: "false", Type: api.PromFilterExact},
+			{Key: "Duplicate", Value: "true", Type: api.PromFilterDifferent},
 		},
 		ValueKey: "val",
 		Labels:   []string{"by_field"},

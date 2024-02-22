@@ -29,13 +29,14 @@ const (
 	HistogramMetric MetricType = "Histogram"
 	// Note: we don't expose gauge on purpose to avoid configuration mistake related to gauge limitation.
 	// 99% of times, "counter" or "histogram" should be the ones to use. We can eventually revisit later.
-	MatchExact    FilterMatchType = "Exact"
-	MatchRegex    FilterMatchType = "Regex"
-	MatchPresence FilterMatchType = "Presence"
-	MatchAbsence  FilterMatchType = "Absence"
-	Egress        NodeDirection   = "Egress"
-	Ingress       NodeDirection   = "Ingress"
-	AnyDirection  NodeDirection   = "Any"
+	MatchExact     FilterMatchType = "Exact"
+	MatchDifferent FilterMatchType = "Different"
+	MatchRegex     FilterMatchType = "Regex"
+	MatchPresence  FilterMatchType = "Presence"
+	MatchAbsence   FilterMatchType = "Absence"
+	Egress         NodeDirection   = "Egress"
+	Ingress        NodeDirection   = "Ingress"
+	AnyDirection   NodeDirection   = "Any"
 )
 
 type MetricFilter struct {
@@ -48,7 +49,7 @@ type MetricFilter struct {
 	Value string `json:"value"`
 
 	// Type of matching to apply
-	// +kubebuilder:validation:Enum:="Exact";"Regex";"Presence";"Absence"
+	// +kubebuilder:validation:Enum:="Exact";"Different";"Regex";"Presence";"Absence"
 	// +kubebuilder:default:="Exact"
 	MatchType FilterMatchType `json:"matchType"`
 }
@@ -77,7 +78,7 @@ type FlowMetricSpec struct {
 	ValueField string `json:"valueField,omitempty"`
 
 	// `filters` is a list of fields and values used to restrict which flows are taken into account. Oftentimes, these filters must
-	// be used to eliminate duplicates: `Duplicate:"false"` and `NodeDirection: "0"`.
+	// be used to eliminate duplicates: `Duplicate != "true"` and `NodeDirection = "0"`.
 	// Refer to the documentation for the list of available fields: https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.
 	// +optional
 	Filters []MetricFilter `json:"filters"`
@@ -92,7 +93,7 @@ type FlowMetricSpec struct {
 	Labels []string `json:"labels"`
 
 	// When set to `true`, flows duplicated across several interfaces will add up in the generated metrics.
-	// When set to `false` (default), it is equivalent to adding the exact filter on `Duplicate`: `false`.
+	// When set to `false` (default), it is equivalent to adding the exact filter on `Duplicate` != `true`.
 	// +optional
 	IncludeDuplicates bool `json:"includeDuplicates,omitempty"`
 

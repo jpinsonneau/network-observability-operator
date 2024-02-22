@@ -61,8 +61,8 @@ spec:
               filters:
                 description: '`filters` is a list of fields and values used to restrict
                   which flows are taken into account. Oftentimes, these filters must
-                  be used to eliminate duplicates: `Duplicate:"false"` and `NodeDirection:
-                  "0"`. Refer to the documentation for the list of available fields:
+                  be used to eliminate duplicates: `Duplicate != "true"` and `NodeDirection
+                  = "0"`. Refer to the documentation for the list of available fields:
                   https://docs.openshift.com/container-platform/latest/networking/network_observability/json-flows-format-reference.html.'
                 items:
                   properties:
@@ -74,6 +74,7 @@ spec:
                       description: Type of matching to apply
                       enum:
                       - Exact
+                      - Different
                       - Regex
                       - Presence
                       - Absence
@@ -87,10 +88,9 @@ spec:
                   type: object
                 type: array
               includeDuplicates:
-                description: 'When set to `true`, flows duplicated across several
-                  interfaces will add up in the generated metrics. When set to `false`
-                  (default), it is equivalent to adding the exact filter on `Duplicate`:
-                  `false`.'
+                description: When set to `true`, flows duplicated across several interfaces
+                  will add up in the generated metrics. When set to `false` (default),
+                  it is equivalent to adding the exact filter on `Duplicate` != `true`.
                 type: boolean
               labels:
                 description: '`labels` is a list of fields that should be used as
