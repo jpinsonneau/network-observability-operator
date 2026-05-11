@@ -268,6 +268,45 @@ func TestDaemonSetNilSetsInProgress(t *testing.T) {
 	assert.Equal(t, "DaemonSetNotCreated", cs.Reason)
 }
 
+func TestDaemonSetZeroDesiredScheduled(t *testing.T) {
+	s := NewManager()
+	agent := s.ForComponent(EBPFAgents)
+
+	// DesiredNumberScheduled == 0 means no nodes matched the nodeSelector
+	agent.CheckDaemonSetProgress(&appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "netobserv-ebpf-agent"},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: 0,
+			NumberReady:            0,
+		},
+	})
+
+	cs := agent.Get()
+	assert.Equal(t, StatusDegraded, cs.Status)
+	assert.Equal(t, "NoPodsScheduled", cs.Reason)
+	assert.Contains(t, cs.Message, "netobserv-ebpf-agent")
+	assert.Contains(t, cs.Message, "nodeSelector")
+}
+
+func TestDaemonSetZeroDesiredScheduledHealth(t *testing.T) {
+	s := NewManager()
+	agent := s.ForComponent(EBPFAgents)
+
+	// CheckDaemonSetHealth should also report Degraded when no pods are scheduled
+	agent.CheckDaemonSetHealth(context.Background(), nil, &appsv1.DaemonSet{
+		ObjectMeta: metav1.ObjectMeta{Name: "netobserv-ebpf-agent"},
+		Spec:       appsv1.DaemonSetSpec{Selector: &metav1.LabelSelector{MatchLabels: map[string]string{"app": "agent"}}},
+		Status: appsv1.DaemonSetStatus{
+			DesiredNumberScheduled: 0,
+			NumberReady:            0,
+		},
+	})
+
+	cs := agent.Get()
+	assert.Equal(t, StatusDegraded, cs.Status)
+	assert.Equal(t, "NoPodsScheduled", cs.Reason)
+}
+
 func TestDeploymentMissingConditionFallback(t *testing.T) {
 	s := NewManager()
 	plugin := s.ForComponent(WebConsole)

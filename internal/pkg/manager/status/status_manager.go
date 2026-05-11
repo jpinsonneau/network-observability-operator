@@ -539,7 +539,7 @@ func (i *Instance) setDeploymentReplicas(d *appsv1.Deployment) {
 	}
 }
 
-// CheckDaemonSetProgress sets the status either as In Progress, or Ready,
+// CheckDaemonSetProgress sets the status either as In Progress, Ready, or Degraded,
 // and populates replica counts from the DaemonSet status.
 func (i *Instance) CheckDaemonSetProgress(ds *appsv1.DaemonSet) {
 	if ds == nil {
@@ -547,7 +547,9 @@ func (i *Instance) CheckDaemonSetProgress(ds *appsv1.DaemonSet) {
 		return
 	}
 	defer i.setDaemonSetReplicas(ds)
-	if ds.Status.NumberReady < ds.Status.DesiredNumberScheduled {
+	if ds.Status.DesiredNumberScheduled == 0 {
+		i.s.setDegraded(i.cpnt, "NoPodsScheduled", fmt.Sprintf("DaemonSet %s has no pods scheduled; check nodeSelector or node availability", ds.Name))
+	} else if ds.Status.NumberReady < ds.Status.DesiredNumberScheduled {
 		i.s.setInProgress(i.cpnt, "DaemonSetNotReady", fmt.Sprintf("DaemonSet %s not ready: %d/%d", ds.Name, ds.Status.NumberReady, ds.Status.DesiredNumberScheduled))
 	} else {
 		i.s.setReady(i.cpnt)
