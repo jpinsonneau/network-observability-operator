@@ -115,48 +115,6 @@ For new releases two differents directory are important :
 
 To be able to see release pipeline, a read access to the `rhtap-releng` namespace is required, this access must be requested in the konflux-user slack channel.
 
-### Konflux PF4 and PF5 console plugin prerequisite
-
-Sections below use `oc patch components …` and `oc annotate component/…` for `network-observability-console-plugin-pf4-*` and `network-observability-console-plugin-pf5-*`. Those commands **fail with NotFound** if the matching Konflux `Component` does not exist in `ocp-network-observab-tenant`.
-
-Verify PF4 components before running PF4 patch/annotate lines:
-
-```bash
-NS=ocp-network-observab-tenant
-for c in \
-  network-observability-console-plugin-pf4-ystream \
-  network-observability-console-plugin-pf4-zstream
-do
-  if oc get "components.appstudio.redhat.com/$c" -n "$NS" &>/dev/null; then
-    echo "ok: $c"
-  else
-    echo "MISSING: $c" >&2
-    echo "  Create this Component in Konflux (applications netobserv-ystream / netobserv-zstream). Names must match [ReleasePlanAdmission](https://gitlab.cee.redhat.com/releng/konflux-release-data/-/tree/main/config/stone-prd-rh01.pg1f.p1/product/ReleasePlanAdmission/ocp-network-observab)." >&2
-    exit 1
-  fi
-done
-```
-
-If you use PF5 mirrors, patches, or annotations, verify PF5 components exist first:
-
-```bash
-NS=ocp-network-observab-tenant
-for c in \
-  network-observability-console-plugin-pf5-ystream \
-  network-observability-console-plugin-pf5-zstream
-do
-  if oc get "components.appstudio.redhat.com/$c" -n "$NS" &>/dev/null; then
-    echo "ok: $c"
-  else
-    echo "MISSING: $c" >&2
-    echo "  Onboard PF5 in Konflux first, or remove the PF5 ImageDigestMirrorSet block and omit every command referencing network-observability-console-plugin-pf5-*." >&2
-    exit 1
-  fi
-done
-```
-
-Skip the second script (and omit PF5 lines in later sections) until PF5 `Component` resources exist.
-
 ### Branching
 
 After creating a new release branch, the following steps need to be done:
