@@ -42,8 +42,6 @@ Konflux will regulary create new pull requests, there are three categories :
 
 ## Deploying
 
-If you keep the PF5 mirror entries in the manifest below, the corresponding Konflux `Component` names must exist; otherwise remove that mirror block or onboarding will not match reality (see [Konflux PF4 and PF5 console plugin prerequisite](#konflux-pf4-and-pf5-console-plugin-prerequisite)).
-
 An `ImageDigestMirrorSet` is required:
 
 ```yaml
@@ -72,7 +70,7 @@ spec:
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-ystream
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf4-zstream
-      source: registry.redhat.io/network-observability/network-observability-console-plugin-compat-rhel9
+      source: registry.redhat.io/network-observability/network-observability-console-plugin-pf4-rhel9
     - mirrors:
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf5-ystream
       - quay.io/redhat-user-workloads/ocp-network-observab-tenant/network-observability-console-plugin-pf5-zstream
@@ -200,7 +198,7 @@ After a release, the following steps should be done:
 
 ### Redirecting branches (after ystream release)
 
-After release, we need to repurpose zstream to the just released branch, and ystream to main. Skip `network-observability-console-plugin-pf5-*` patches if those components do not exist (see [Konflux PF4 and PF5 console plugin prerequisite](#konflux-pf4-and-pf5-console-plugin-prerequisite)).
+After release, we need to repurpose zstream to the just released branch, and ystream to main.
 
 ```bash
 oc patch components flowlogs-pipeline-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'main'}]"
@@ -224,7 +222,7 @@ oc patch components network-observability-console-plugin-pf5-zstream --type='jso
 
 ### Freezing zstream
 
-You may want to freeze a branch (stop mintmaker from opening PRs) after it was released on zstream, if you don't plan more releases there at the moment. To do so, log in the Konflux' OpenShift and run (skip PF5 annotate lines if those components are not onboarded; see [Konflux PF4 and PF5 console plugin prerequisite](#konflux-pf4-and-pf5-console-plugin-prerequisite)):
+You may want to freeze a branch (stop mintmaker from opening PRs) after it was released on zstream, if you don't plan more releases there at the moment. To do so, log in the Konflux' OpenShift and run:
 
 ```bash
 oc -n ocp-network-observab-tenant annotate component/flowlogs-pipeline-zstream mintmaker.appstudio.redhat.com/disabled=true
