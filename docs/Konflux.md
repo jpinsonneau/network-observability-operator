@@ -118,7 +118,7 @@ To be able to see release pipeline, a read access to the `rhtap-releng` namespac
 ### Branching
 
 After creating a new release branch, the following steps need to be done:
-- update the konflux components source branches (e.g. below for release-10). Skip any `network-observability-console-plugin-pf5-*` line if those components are not onboarded yet (see [Konflux PF4 and PF5 console plugin prerequisite](#konflux-pf4-and-pf5-console-plugin-prerequisite)).
+- update the konflux components source branches (e.g. below for release-10).
 
 ```bash
 oc patch components flowlogs-pipeline-ystream --type='json' -p "[{'op': 'replace', 'path': '/spec/source/git/revision', 'value': 'release-1.10'}]"
