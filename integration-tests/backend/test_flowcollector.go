@@ -3026,7 +3026,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(err).NotTo(o.HaveOccurred())
 			})
 
-			g.It("Author:aramesha-NonPreRelease-Longduration-High-57397-High-65116-Verify network-flows export with Kafka and netobserv installation without Loki[Serial]", func() {
+			g.It("Author:aramesha-NonPreRelease-Longduration-High-57397-High-65116-Low-89197-Verify network-flows export with Kafka and netobserv installation without Loki[Serial]", func() {
 				SkipIfOCPBelow("v4.10")
 				g.By("Deploy kafka Topic for export")
 				// deploy kafka topic for export
@@ -3067,6 +3067,11 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 				o.Expect(err).ToNot(o.HaveOccurred())
 				kafkaConfig := string(config)
 
+				// Use random compression to test different options across periodic runs
+				validCompressions := []string{"gzip", "snappy", "lz4", "zstd"}
+				randomCompression := validCompressions[g.GinkgoRandomSeed()%int64(len(validCompressions))]
+				e2e.Logf("Using Kafka compression: %s (seed: %d)", randomCompression, g.GinkgoRandomSeed())
+
 				g.By("Deploy FlowCollector with Kafka TLS")
 				flow := Flowcollector{
 					Namespace:                         namespace,
@@ -3076,6 +3081,7 @@ var _ = g.Describe("[sig-netobserv] Network_Observability", func() {
 					KafkaAddress:                      kafkaAddress,
 					KafkaTLSEnable:                    "true",
 					KafkaNamespace:                    kafkaNs,
+					KafkaCompression:                  randomCompression,
 					Exporters:                         []string{kafkaConfig},
 					NetworkPolicyAdditionalNamespaces: []string{additionalNamespaces},
 				}
