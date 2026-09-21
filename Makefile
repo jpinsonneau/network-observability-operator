@@ -154,11 +154,38 @@ endif
 export OPERATOR_DIGEST BPF_DIGEST FLP_DIGEST PLG_DIGEST PLG_DIGEST_PF4 PLG_DIGEST_PF5 SWC_DIGEST
 endif
 
+ifeq ("$(PIN_DIGEST)", "true")
+BUNDLE_OPERATOR_IMAGE := quay.io/netobserv/network-observability-operator@$(OPERATOR_DIGEST)
+else
+BUNDLE_OPERATOR_IMAGE := $(IMAGE)
+endif
+
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
 # Options are set to exit when a recipe line exits non-zero or a piped command fails.
 SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
+
+.PHONY: validate-digests
+validate-digests:
+ifeq ("$(PIN_DIGEST)", "true")
+	@validate_digest() { \
+		local name="$$1" value="$$2"; \
+		if [[ ! "$$value" =~ ^sha256:[0-9a-f]{64}$$ ]]; then \
+			echo "Failed to resolve a valid $$name: $$value"; \
+			exit 1; \
+		fi; \
+	}; \
+	validate_digest OPERATOR_DIGEST "$(OPERATOR_DIGEST)"; \
+	validate_digest BPF_DIGEST "$(BPF_DIGEST)"; \
+	validate_digest FLP_DIGEST "$(FLP_DIGEST)"; \
+	validate_digest PLG_DIGEST "$(PLG_DIGEST)"; \
+	validate_digest SWC_DIGEST "$(SWC_DIGEST)"
+ifeq ("$(BUNDLE_TARGET)", "OpenShift")
+	@[[ "$(PLG_DIGEST_PF4)" =~ ^sha256:[0-9a-f]{64}$$ ]] || { echo "Failed to resolve a valid PLG_DIGEST_PF4: $(PLG_DIGEST_PF4)"; exit 1; }
+	@[[ "$(PLG_DIGEST_PF5)" =~ ^sha256:[0-9a-f]{64}$$ ]] || { echo "Failed to resolve a valid PLG_DIGEST_PF5: $(PLG_DIGEST_PF5)"; exit 1; }
+endif
+endif
 
 NAMESPACE ?= netobserv
 
@@ -446,9 +473,9 @@ install: kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/con
 uninstall: kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config.
 	$(KUSTOMIZE) build config/crd | kubectl --ignore-not-found=true delete -f - || true
 
-set-manager-images: kustomize ## Update image references
+set-manager-images: validate-digests kustomize ## Update image references
 ifeq ("$(PIN_DIGEST)", "true")
-	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE_TAG_BASE)@$(OPERATOR_DIGEST)
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(BUNDLE_OPERATOR_IMAGE)
 	$(SED) -i -E "/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent@$(BPF_DIGEST)~}" ./config/manager/manager.yaml
 	$(SED) -i -E "/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline@$(FLP_DIGEST)~}" ./config/manager/manager.yaml
 	$(SED) -i -E "/RELATED_IMAGE_WEB_CONSOLE$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin@$(PLG_DIGEST)~}" ./config/manager/manager.yaml
@@ -457,7 +484,7 @@ ifeq ("$(BUNDLE_TARGET)", "OpenShift")
 	$(SED) -i -E "/RELATED_IMAGE_WEB_CONSOLE_PF5$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin@$(PLG_DIGEST_PF5)~}" ./config/openshift/common/manager-patch.yaml
 endif
 else
-	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMAGE}
+	cd config/manager && $(KUSTOMIZE) edit set image controller=$(IMAGE)
 	$(SED) -i -E '/RELATED_IMAGE_EBPF_AGENT$$/{ n; s~value:.+$$~value: quay.io/netobserv/netobserv-ebpf-agent:$(BPF_VERSION)~}' ./config/manager/manager.yaml
 	$(SED) -i -E '/RELATED_IMAGE_FLOWLOGS_PIPELINE$$/{ n; s~value:.+$$~value: quay.io/netobserv/flowlogs-pipeline:$(FLP_VERSION)~}' ./config/manager/manager.yaml
 	$(SED) -i -E '/RELATED_IMAGE_WEB_CONSOLE$$/{ n; s~value:.+$$~value: quay.io/netobserv/network-observability-console-plugin:$(PLG_VERSION)~}' ./config/manager/manager.yaml
@@ -500,7 +527,7 @@ bundle-nogen: YQ OPSDK kustomize set-manager-images ## Generate final bundle fil
 	done; \
 	( \
 		($(KUSTOMIZE) build config/csv \
-			| $(YQ) '.metadata.annotations.containerImage = "$(IMAGE)"' \
+			| $(YQ) '.metadata.annotations.containerImage = "$(BUNDLE_OPERATOR_IMAGE)"' \
 			| $(YQ) '.spec.description = load_str("$(BUNDLE_CONFIG)/description.md")' \
 		); \
 		echo "---"; $(KUSTOMIZE) build config/samples; \
@@ -615,7 +642,7 @@ related-release-notes: ## Grab release notes for related components (to be inser
 
 # Update helm templates
 .PHONY: helm-update
-helm-update: YQ ## Update helm template
+helm-update: validate-digests YQ ## Update helm template
 	$(SED) -i -E 's/^appVersion:.*/appVersion: $(BUNDLE_VERSION)/g' helm/Chart.yaml
 	$(SED) -i -E 's/^version:.*/version: $(BUNDLE_VERSION:%-community=%)/g' helm/Chart.yaml
 ifeq ("$(PIN_DIGEST)", "true")
