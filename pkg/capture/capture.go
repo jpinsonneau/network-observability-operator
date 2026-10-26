@@ -161,7 +161,7 @@ func BuildCollectorService(name, namespace string, selector map[string]string) *
 	return &corev1.Service{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "v1", Kind: "Service"},
 		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace},
-		Spec:       corev1.ServiceSpec{Selector: selector, Ports: []corev1.ServicePort{{Name: "collector", Protocol: corev1.ProtocolTCP, Port: 9999, TargetPort: intstr.FromInt(9999)}}},
+		Spec:       corev1.ServiceSpec{Selector: selector, Ports: []corev1.ServicePort{{Name: "collector", Protocol: corev1.ProtocolTCP, Port: 9999, TargetPort: intstr.FromInt32(9999)}}},
 	}
 }
 
