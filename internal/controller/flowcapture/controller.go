@@ -76,6 +76,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, r.Update(ctx, &fc)
 	}
 	if fc.Status.CompletionTime != nil {
+		if err := r.deleteAgentDaemonSet(ctx, &fc); err != nil {
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
 	}
 	if !controllerutil.ContainsFinalizer(&fc, flowCaptureFinalizer) {
@@ -308,6 +311,15 @@ func (r *Reconciler) reconcileCapturePermissions(ctx context.Context, namespace,
 
 func (r *Reconciler) removeCapturePermissions(ctx context.Context, fc *flowcapturev1alpha1.FlowCapture) error {
 	return r.reconcileCapturePermissions(ctx, fc.Namespace, sharedcapture.NewNames(fc.Name).AgentDaemonSet, true)
+}
+
+func (r *Reconciler) deleteAgentDaemonSet(ctx context.Context, fc *flowcapturev1alpha1.FlowCapture) error {
+	name := sharedcapture.NewNames(fc.Name).AgentDaemonSet
+	agent := &appsv1.DaemonSet{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: fc.Namespace}}
+	if err := r.Delete(ctx, agent); err != nil && !errors.IsNotFound(err) {
+		return fmt.Errorf("cannot delete completed FlowCapture agent DaemonSet %q: %w", name, err)
+	}
+	return nil
 }
 
 func (r *Reconciler) ensure(ctx context.Context, owner *flowcapturev1alpha1.FlowCapture, obj client.Object) error {
