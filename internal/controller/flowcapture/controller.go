@@ -65,6 +65,7 @@ type Reconciler struct {
 	client.Client
 	apiReader client.Reader
 	config    *manager.Config
+	staticQ   enqueuer.Static
 	managedQ  enqueuer.Dynamic
 }
 
@@ -76,6 +77,7 @@ func Start(_ context.Context, mgr *manager.Manager) (manager.PostCreateHook, err
 	if err != nil {
 		return nil, err
 	}
+	r.staticQ = mgr.NewStaticControllerEnqueuer("flowcapture-managed-static", controller)
 	r.managedQ = mgr.NewDynamicControllerEnqueuer("flowcapture-managed", controller)
 	return nil, nil
 }
@@ -509,7 +511,6 @@ func (r *Reconciler) reconcileCollectorResources(ctx context.Context, fc *flowca
 	}
 	for _, object := range []client.Object{
 		desiredCollectorServiceAccount(names),
-		desiredCollectorRole(names),
 		desiredCollectorRoleBinding(names),
 		r.desiredCollector(fc, image, names),
 	} {
@@ -543,7 +544,7 @@ func (r *Reconciler) reconcileCaptureSetup(ctx context.Context, fc *flowcapturev
 	if err := r.ensureUnowned(ctx, agentServiceAccount); err != nil {
 		return err
 	}
-	if err := r.reconcileCapturePermissions(ctx, names.AgentNamespace, names.AgentDaemonSet, fc.Spec.TLSPlaintext != nil, false); err != nil {
+	if err := r.reconcileCapturePermissions(ctx, fc, names.AgentNamespace, names.AgentDaemonSet, fc.Spec.TLSPlaintext != nil, false); err != nil {
 		return err
 	}
 	if r.isOpenShift() {
@@ -772,47 +773,25 @@ func (r *Reconciler) deleteFlowCaptureDashboard(ctx context.Context, _ *flowcapt
 
 // reconcileCapturePermissions only updates the preinstalled ClusterRoleBinding
 // shells. FlowCapture must never create Roles or RoleBindings at runtime.
-func (r *Reconciler) reconcileCapturePermissions(ctx context.Context, namespace, serviceAccount string, plaintext, remove bool) error {
-	roleNames := []string{
-		string(roles.FlowCaptureInformersRole),
-		string(roles.FlowCaptureSCCRole),
-		string(roles.FlowCapturePlaintextSCCRole),
+func (r *Reconciler) reconcileCapturePermissions(ctx context.Context, fc *flowcapturev1alpha1.FlowCapture, namespace, serviceAccount string, plaintext, remove bool) error {
+	setWatcher := func(crb *rbacv1.ClusterRoleBinding) error {
+		return r.staticQ.EnqueueOnChange(ctx, crb, flowCaptureRequest(fc))
 	}
-	for _, roleName := range roleNames {
-		var binding rbacv1.ClusterRoleBinding
-		if err := r.Get(ctx, client.ObjectKey{Name: roleName}, &binding); err != nil {
-			if remove && errors.IsNotFound(err) {
-				continue
-			}
-			return fmt.Errorf("cannot get preinstalled ClusterRoleBinding %q: %w", roleName, err)
-		}
-		subject := rbacv1.Subject{Kind: "ServiceAccount", Name: serviceAccount, Namespace: namespace}
-		index := -1
-		for i := range binding.Subjects {
-			if binding.Subjects[i] == subject {
-				index = i
-				break
-			}
-		}
-		wantSubject := roleName != string(roles.FlowCapturePlaintextSCCRole) || plaintext
-		if (!wantSubject || remove) && index >= 0 {
-			binding.Subjects = append(binding.Subjects[:index], binding.Subjects[index+1:]...)
-			if err := r.Update(ctx, &binding); err != nil {
-				return fmt.Errorf("cannot remove FlowCapture service account from %q: %w", roleName, err)
-			}
-		} else if wantSubject && !remove && index < 0 {
-			binding.Subjects = append(binding.Subjects, subject)
-			if err := r.Update(ctx, &binding); err != nil {
-				return fmt.Errorf("cannot add FlowCapture service account to %q: %w", roleName, err)
-			}
-		}
+	if err := reconcilers.ReconcileClusterRoleBinding(ctx, r, namespace, serviceAccount, roles.FlowCaptureInformersRole, remove, setWatcher); err != nil {
+		return err
+	}
+	if err := reconcilers.ReconcileClusterRoleBinding(ctx, r, namespace, serviceAccount, roles.FlowCaptureSCCRole, remove, setWatcher); err != nil {
+		return err
+	}
+	if err := reconcilers.ReconcileClusterRoleBinding(ctx, r, namespace, serviceAccount, roles.FlowCapturePlaintextSCCRole, remove || !plaintext, setWatcher); err != nil {
+		return err
 	}
 	return nil
 }
 
 func (r *Reconciler) removeCapturePermissions(ctx context.Context, fc *flowcapturev1alpha1.FlowCapture) error {
 	names := r.captureNames(fc)
-	return r.reconcileCapturePermissions(ctx, names.AgentNamespace, names.AgentDaemonSet, fc.Spec.TLSPlaintext != nil, true)
+	return r.reconcileCapturePermissions(ctx, fc, names.AgentNamespace, names.AgentDaemonSet, fc.Spec.TLSPlaintext != nil, true)
 }
 
 func (r *Reconciler) deleteAgentDaemonSet(ctx context.Context, fc *flowcapturev1alpha1.FlowCapture) error {
@@ -858,7 +837,6 @@ func (r *Reconciler) deleteCollectorResources(ctx context.Context, fc *flowcaptu
 		&corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: names.CollectorService, Namespace: names.CollectorNamespace}},
 		&monitoringv1.ServiceMonitor{ObjectMeta: metav1.ObjectMeta{Name: names.CollectorService + "-metrics", Namespace: names.CollectorNamespace}},
 		&corev1.ServiceAccount{ObjectMeta: metav1.ObjectMeta{Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace}},
-		&rbacv1.Role{ObjectMeta: metav1.ObjectMeta{Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace}},
 		&rbacv1.RoleBinding{ObjectMeta: metav1.ObjectMeta{Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace}},
 		&networkingv1.NetworkPolicy{ObjectMeta: metav1.ObjectMeta{Name: fc.Name + "-collector", Namespace: names.CollectorNamespace}},
 	}
@@ -1042,19 +1020,11 @@ func desiredCollectorServiceAccount(names *captureNames) *corev1.ServiceAccount 
 	return sharedcapture.BuildServiceAccount(names.CollectorServiceAccount, names.CollectorNamespace)
 }
 
-func desiredCollectorRole(names *captureNames) *rbacv1.Role {
-	return &rbacv1.Role{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "rbac.authorization.k8s.io/v1", Kind: "Role"},
-		ObjectMeta: metav1.ObjectMeta{Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace},
-		Rules:      []rbacv1.PolicyRule{{APIGroups: []string{""}, Resources: []string{"pods"}, Verbs: []string{"get", "patch"}}},
-	}
-}
-
 func desiredCollectorRoleBinding(names *captureNames) *rbacv1.RoleBinding {
 	return &rbacv1.RoleBinding{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "rbac.authorization.k8s.io/v1", Kind: "RoleBinding"},
 		ObjectMeta: metav1.ObjectMeta{Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace},
-		RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "Role", Name: names.CollectorServiceAccount},
+		RoleRef:    rbacv1.RoleRef{APIGroup: "rbac.authorization.k8s.io", Kind: "ClusterRole", Name: string(roles.PodPatcherRole)},
 		Subjects:   []rbacv1.Subject{{Kind: "ServiceAccount", Name: names.CollectorServiceAccount, Namespace: names.CollectorNamespace}},
 	}
 }

@@ -101,7 +101,7 @@ func IsMarkedForDeletion(o client.Object) bool {
 
 // ReconcileClusterRoleBinding updates the current role binding with the provided service account as a subject.
 // It does NOT try to create or delete it: operand CRBs are expected to be preinstalled. The operator does not have create permission.
-func ReconcileClusterRoleBinding(ctx context.Context, q enqueuer.Static, cl *helper.Client, namespace, sa string, ref roles.ClusterRoleName, isDelete bool) error {
+func ReconcileClusterRoleBinding(ctx context.Context, cl client.Client, namespace, sa string, ref roles.ClusterRoleName, isDelete bool, setWatcher func(crb *rbacv1.ClusterRoleBinding) error) error {
 	log := log.FromContext(ctx)
 	crb := rbacv1.ClusterRoleBinding{}
 	if err := cl.Get(ctx, types.NamespacedName{Name: string(ref)}, &crb); err != nil {
@@ -110,13 +110,13 @@ func ReconcileClusterRoleBinding(ctx context.Context, q enqueuer.Static, cl *hel
 		}
 		return fmt.Errorf("can't reconcile ClusterRoleBinding %s: %w", ref, err)
 	}
-	if q != nil {
-		if err := q.EnqueueOnChange(ctx, &crb, reconcile.Request{NamespacedName: constants.FlowCollectorName}); err != nil {
-			log.Error(err, "Failed to setup request enqueuer on ClusterRoleBinding "+string(ref))
+	if setWatcher != nil {
+		if err := setWatcher(&crb); err != nil {
+			log.Error(err, "Failed to set watcher on ClusterRoleBinding "+string(ref))
 			return err
 		}
 	} else {
-		log.Info("No enqueuer set up for ClusterRoleBinding " + string(ref))
+		log.Info("No watcher set up for ClusterRoleBinding " + string(ref))
 	}
 
 	subject := rbacv1.Subject{

@@ -13,6 +13,7 @@ import (
 	"github.com/netobserv/netobserv-operator/internal/pkg/watchers"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 type Common struct {
@@ -56,7 +57,12 @@ func (c *Common) NewInstance(images map[ImageRef]string, st status.Instance) *In
 }
 
 func (c *Common) ReconcileClusterRoleBinding(ctx context.Context, namespace, sa string, ref roles.ClusterRoleName, isDelete bool) error {
-	return ReconcileClusterRoleBinding(ctx, c.Enqueuer, &c.Client, namespace, sa, ref, isDelete)
+	return ReconcileClusterRoleBinding(ctx, &c.Client, namespace, sa, ref, isDelete, func(crb *rbacv1.ClusterRoleBinding) error {
+		if c.Enqueuer != nil {
+			return c.Enqueuer.EnqueueOnChange(ctx, crb, reconcile.Request{NamespacedName: constants.FlowCollectorName})
+		}
+		return nil
+	})
 }
 
 func (c *Common) ReconcileRoleBinding(ctx context.Context, desired *rbacv1.RoleBinding) error {

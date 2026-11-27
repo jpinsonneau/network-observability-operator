@@ -41,9 +41,9 @@ rules:
   - pods
   verbs:
   - create
+  - delete
   - get
   - list
-  - patch
   - watch
 - apiGroups:
   - apiextensions.k8s.io
@@ -73,7 +73,6 @@ rules:
   resources:
   - daemonsets
   - deployments
-  - replicasets
   verbs:
   - create
   - delete
@@ -248,13 +247,14 @@ rules:
 - apiGroups:
   - rbac.authorization.k8s.io
   resourceNames:
-  - netobserv-flowcapture-informers
+  - netobserv-flowcapture-plaintext-scc
   - netobserv-flowcapture-scc
   - netobserv-flowcollector-viewer-role
   - netobserv-flp-extra-reader
   - netobserv-hostnetwork
   - netobserv-informers
   - netobserv-loki-writer
+  - netobserv-pod-patcher
   - netobserv-token-review
   resources:
   - clusterroles
@@ -269,18 +269,6 @@ rules:
   - delete
   - get
   - list
-  - update
-  - watch
-- apiGroups:
-  - rbac.authorization.k8s.io
-  resources:
-  - roles
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
   - update
   - watch
 - apiGroups:
@@ -310,11 +298,3 @@ rules:
   verbs:
   - get
   - update
-- apiGroups:
-  - security.openshift.io
-  resourceNames:
-  - netobserv-flowcapture-plaintext
-  resources:
-  - securitycontextconstraints
-  verbs:
-  - use

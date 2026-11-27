@@ -27,7 +27,7 @@ metadata:
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: flowcapture
+  name: informers
 subjects: []
 ---
 apiVersion: rbac.authorization.k8s.io/v1

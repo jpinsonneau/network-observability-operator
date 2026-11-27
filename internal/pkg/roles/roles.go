@@ -21,6 +21,7 @@ const (
 	ConsoleTokenReviewRole      ClusterRoleName = "netobserv-token-review"
 	FlowCollectorViewerRole     ClusterRoleName = "netobserv-flowcollector-viewer-role"
 	ConfigWatcherRole           RoleName        = "netobserv-config-watcher"
+	PodPatcherRole              RoleName        = "netobserv-pod-patcher"
 	FlowCaptureInformersRole    ClusterRoleName = "netobserv-flowcapture-informers"
 	FlowCaptureSCCRole          ClusterRoleName = "netobserv-flowcapture-scc"
 	FlowCapturePlaintextSCCRole ClusterRoleName = "netobserv-flowcapture-plaintext-scc"

@@ -190,44 +190,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: flowcapture
+  name: pod-patcher
 rules:
-- apiGroups:
-  - ""
-  resources:
-  # The agent uses these for Kubernetes metadata and service endpoint enrichment.
-  - endpoints
-  - namespaces
-  - nodes
-  - services
-  verbs:
-  - get
-  - list
-  - watch
 - apiGroups:
   - ""
   resources:
   - pods
   verbs:
-  - get
-  - list
   - patch
-  - watch
-- apiGroups:
-  - apps
-  resources:
-  - deployments
-  - replicasets
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - config.openshift.io
-  resources:
-  - apiservers
-  resourceNames:
-  - cluster
-  verbs:
-  - get
 ---
